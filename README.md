@@ -1,6 +1,6 @@
 # Juninho: assistente de WhatsApp com IA para uma locadora de veículos
 
-O Juninho é um agente de IA que roda no WhatsApp e cuida da parte administrativa de uma pequena locadora de veículos familiar. O dono conversa com ele em linguagem natural, por texto, áudio, foto ou PDF, e o agente consulta e atualiza a base de dados, gera contratos, registra pagamentos e manda avisos de cobrança sozinho todas as manhãs.
+O Juninho é um agente de IA que roda no WhatsApp e cuida da parte administrativa de uma locadora de veículos familiar. O dono conversa com ele em linguagem natural, por texto, áudio, foto ou PDF, e o agente consulta e atualiza a base de dados, gera contratos, registra pagamentos e manda avisos de cobrança sozinho todas as manhãs.
 
 Eu construí o Juninho para o meu pai, que administra a locadora e não queria ficar preso a planilhas e papelada. Ele está **em produção e é usado todos os dias**.
 
