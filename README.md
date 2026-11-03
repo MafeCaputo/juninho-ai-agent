@@ -105,8 +105,8 @@ Veja [docs/como-rodar.md](docs/como-rodar.md). Em resumo: importe `workflow/juni
 
 ## Próximos passos
 
-- Testes automatizados para os nós de código (cálculo de cobrança e de limite de km)
-- Painel web simples com faturamento e ocupação da frota
+- Juninho interagindo diretamente com clientes, para lembretes de cobrança
+- Painel web simples com faturamento, ocupação da frota e visualização dos odômetros
 - Trocar o Google Sheets por um banco de dados quando a frota crescer
 
 ---
