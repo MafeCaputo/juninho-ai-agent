@@ -2,7 +2,7 @@
 
 O Juninho é um agente de IA que roda no WhatsApp e cuida da parte administrativa de uma locadora de veículos familiar. O dono conversa com ele em linguagem natural, por texto, áudio, foto ou PDF, e o agente consulta e atualiza a base de dados, gera contratos, registra pagamentos e manda avisos de cobrança sozinho todas as manhãs.
 
-Eu construí o Juninho para o meu pai, que administra a locadora e não queria ficar preso a planilhas e papelada. Ele está **ativo e funciona todos os dias**: atende a locadora pelo WhatsApp e envia os avisos automáticos todas as manhãs.
+Eu construí o Juninho para o meu pai, que administra a locadora e não queria ficar preso a planilhas e papelada. Ele está **em produção e funciona todos os dias**: atende a locadora pelo WhatsApp e envia os avisos automáticos todas as manhãs.
 
 > Feito com **n8n**, **Claude (Anthropic)**, **OpenAI** (transcrição de áudio), **WAHA (API de WhatsApp) na Oracle Cloud** e **Google Sheets / Drive / Docs**.
 
