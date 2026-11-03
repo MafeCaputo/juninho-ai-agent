@@ -1,0 +1,4459 @@
+{
+  "name": "Juninho - Assistente de Locadora de Veículos",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "TROQUE-POR-UM-CAMINHO-ALEATORIO",
+        "options": {}
+      },
+      "id": "3cf45adb-d595-414d-8544-5beb517fae12",
+      "name": "Entrada WhatsApp (WAHA)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        -512,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "chatId",
+              "type": "string",
+              "value": "={{ String(($json.body.payload.fromMe === true ? $json.body.payload.to : $json.body.payload.from) || \"\").replace(\"55009900000001@\", \"5500900000001@\") }}"
+            },
+            {
+              "id": "a2",
+              "name": "remetente",
+              "type": "string",
+              "value": "={{ String($json.body.payload.from || \"\").replace(/@.*$/, \"\") }}"
+            },
+            {
+              "id": "a3",
+              "name": "texto",
+              "type": "string",
+              "value": "={{ String($json.body.payload.body || \"\").trim() }}"
+            },
+            {
+              "id": "a4",
+              "name": "sessao",
+              "type": "string",
+              "value": "={{ $json.body.session || \"default\" }}"
+            },
+            {
+              "id": "a5",
+              "name": "fromMe",
+              "type": "boolean",
+              "value": "={{ $json.body.payload.fromMe === true }}"
+            },
+            {
+              "id": "a6",
+              "name": "evento",
+              "type": "string",
+              "value": "={{ $json.body.event || \"\" }}"
+            },
+            {
+              "id": "a7",
+              "name": "chatPropria",
+              "type": "boolean",
+              "value": "={{ [$json.body.me?.lid, $json.body.me?.id].filter(x => x).includes($json.body.payload?.to) }}"
+            },
+            {
+              "id": "a8",
+              "name": "temImagem",
+              "type": "boolean",
+              "value": "={{ $json.body.payload.hasMedia === true && String($json.body.payload.media?.mimetype || \"\").startsWith(\"image/\") }}"
+            },
+            {
+              "id": "a9",
+              "name": "mediaPath",
+              "type": "string",
+              "value": "={{ \"/\" + String($json.body.payload.media?.url || \"\").split(\"/\").slice(3).join(\"/\") }}"
+            },
+            {
+              "id": "a10",
+              "name": "usarSonnet",
+              "type": "boolean",
+              "value": "={{ $json.body.payload.hasMedia === true && String($json.body.payload.media?.mimetype || \"\").startsWith(\"image/\") }}"
+            },
+            {
+              "id": "a11",
+              "name": "autorizados",
+              "type": "string",
+              "value": "5500900000001,55009900000001,5500900000002,550090000002,5500900000003,55009900000003"
+            },
+            {
+              "id": "a12",
+              "name": "temAudio",
+              "type": "boolean",
+              "value": "={{ $json.body.payload.hasMedia === true && String($json.body.payload.media?.mimetype || \"\").startsWith(\"audio/\") }}"
+            },
+            {
+              "id": "a13",
+              "name": "remetentes",
+              "type": "string",
+              "value": "={{ [$json.body.payload.from, $json.body.payload._data?.key?.remoteJidAlt, $json.body.payload._data?.key?.senderPn, $json.body.payload._data?.key?.participantAlt, $json.body.payload.participant].filter(x => x).map(x => String(x).replace(/@.*$/, \"\").replace(/\\D/g, \"\")).join(\",\") }}"
+            },
+            {
+              "id": "a14",
+              "name": "temPdf",
+              "type": "boolean",
+              "value": "={{ $json.body.payload.hasMedia === true && (String($json.body.payload.media?.mimetype || \"\").startsWith(\"application/pdf\") || /wordprocessingml|msword/i.test(String($json.body.payload.media?.mimetype || \"\")) || /\\.docx?$/i.test(String($json.body.payload.media?.filename || \"\"))) }}"
+            },
+            {
+              "id": "a15",
+              "name": "temOutro",
+              "type": "boolean",
+              "value": "={{ $json.body.payload.hasMedia === true && ![\"image/\", \"audio/\", \"application/pdf\"].some(p => String($json.body.payload.media?.mimetype || \"\").startsWith(p)) && !/wordprocessingml|msword/i.test(String($json.body.payload.media?.mimetype || \"\")) && !/\\.docx?$/i.test(String($json.body.payload.media?.filename || \"\")) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "37698507-260c-44cb-911a-370c4b1541ae",
+      "name": "Extrair Dados da Mensagem",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        272,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ [\"message\", \"message.any\"].includes($json.evento) && $json.fromMe !== true && !$json.texto.startsWith(\"[Juninho]\") && ($json.texto.length > 0 || $json.temImagem === true || $json.temAudio === true || $json.temPdf === true || $json.temOutro === true) && $json.remetentes.split(\",\").some(r => $json.autorizados.split(\",\").includes(r)) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c8a3ef74-5c33-4873-a60e-a1875bf9e577",
+      "name": "Número Autorizado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        496,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "i1",
+              "leftValue": "={{ $json.temImagem }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c0b1fa7a-5dbe-4add-897b-29a9c5d60a36",
+      "name": "Tem imagem?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        928,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ \"http://SEU_SERVIDOR_WAHA:3000\" + $json.mediaPath }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpTemplatedCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "690415d9-8164-40da-ac5e-5471dd4cb594",
+      "name": "Baixar imagem (WAHA)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1296,
+        -480
+      ],
+      "credentials": {
+        "httpTemplatedCustomAuth": {
+          "id": "",
+          "name": "WAHA API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ [ $(\"Extrair Dados da Mensagem\").first().json.texto, $(\"Transcrever áudio\").isExecuted ? \"(mensagem de voz transcrita) \" + $(\"Transcrever áudio\").first().json.text : \"\", $(\"Ler documento\").isExecuted ? (() => { const o = $(\"Ler documento\").first().json; const c = o.content ?? o.text ?? o; const t = (typeof c === \"string\" ? c : Array.isArray(c) ? c.map(x => x.text || \"\").join(\"\\n\") : JSON.stringify(c)).trim(); return t && t.length > 20 ? \"(PDF enviado; dados extraídos abaixo. Trate como foto de documento: use só o que estiver legível, mostre os dados e peça confirmação antes de gravar. Se for contrato de locação, siga IMPORTAR CONTRATO EXISTENTE.)\\n\" + t : \"(PDF enviado, mas a leitura automática falhou e nenhum dado foi extraído. Avise em uma frase que não conseguiu ler o PDF e peça uma foto nítida ou os dados em texto.)\"; })() : \"\", ($(\"Extrair Dados da Mensagem\").first().json.temImagem || $(\"Extrair Dados da Mensagem\").first().json.temPdf) ? \"(REGRA DE ARQUIVO: se este anexo for documento pessoal de cliente (RG, CNH, CPF ou comprovante de endereço), termine a resposta já agora, antes de qualquer confirmação, com o marcador [[ARQUIVAR:Nome completo do titular|tipo]], tipo = RG, CNH, CPF ou Comprovante de endereço. O sistema guarda o arquivo original na pasta docs_locação do Drive. Não use o marcador para comprovante de pagamento, contrato, documento do veículo ou painel de km.)\" : \"\" ].filter(x => x).join(\"\\n\") || \"(o usuário enviou apenas uma imagem, sem legenda)\" }}",
+        "options": {
+          "systemMessage": "=Você é o Juninho, assistente de WhatsApp de uma pequena locadora de veículos. Fale em português do Brasil, sem emojis, com formatação simples de WhatsApp.\nData e hora atuais: {{ $now.setZone(\"America/Sao_Paulo\").toFormat(\"dd/MM/yyyy HH:mm\") }} (horário de Brasília).\n\nESTILO DAS RESPOSTAS (muito importante, cada palavra custa):\n- Seja telegráfico e educado: no máximo 2 frases curtas ou uma lista curta. Sem saudação, sem agradecer, sem \"claro\", sem \"vou verificar\" e sem explicar o que você vai fazer ou fez.\n- Nunca repita o que o usuário acabou de dizer nem recapitule dados já confirmados. Responda só o que foi pedido.\n- Consultas: só os dados que importam, em linhas curtas (ex.: \"TST1A23 Fiat Mobi 2022, disponível\"). Sem frases de abertura ou fechamento.\n- Perguntas: liste só o que falta, numerado, em uma mensagem, sem explicações.\n- Confirmações antes de gravar: uma linha com os dados-chave e \"Confirma?\".\n- Depois de gravar: uma linha (ex.: \"Feito. Locação LOC-... registrada.\"). Não liste de novo todos os campos.\n- Erro: diga em uma frase o que falhou e o que falta.\n- Só se estenda quando o usuário pedir detalhes.\n\nDADOS (use sempre as ferramentas; nunca invente dados):\n- Aba Veiculos: placa, marca, modelo, ano, cor, renavam, status (disponível ou alugado), observacoes, cadastrado_em e, controlados pelo sistema de quilometragem (não altere por ferramenta): km_atual, km_atualizado_em, km_ultima_troca_oleo, data_ultima_troca_oleo, km_aviso_oleo.\n- Aba Clientes: cliente_documento (CPF, é a chave), cliente_nome, nacionalidade, profissao, rg, telefone, endereco, cadastrado_em.\n- Aba Locacoes: id_locacao, placa, cliente_nome, cliente_telefone, cliente_documento (CPF), data_inicio, data_fim_prevista (vencimento do contrato), valor_semanal (aluguel semanal), caucao (caução paga pelo cliente), dia_vencimento (dia da semana em que vence cada aluguel: segunda, terça, quarta, quinta, sexta, sábado ou domingo), status (ativa ou finalizada), contrato_url, km_inicio (km do veículo na entrega ao cliente), limite_km_mensal (limite de km por mês do contrato, cláusula de limite de quilometragem) e valor_km_excedente (R$ por km excedente do contrato).\n- Aba Pagamentos (controle de pagamentos recebidos, uma linha por pagamento): id_pagamento, id_locacao, cliente_nome, placa, data_pagamento, valor, forma_pagamento (pix, ted, dinheiro ou cartão), referencia (vencimento/semana a que se refere, opcional), observacoes, registrado_em.\n- Aba Quilometragem: histórico de leituras de km, gravado só pelo sistema (você não grava nela).\n- O valor semanal do aluguel fica só na locação (Locacoes), nunca no veículo.\n\nO QUE VOCÊ FAZ: consultar veículos; cadastrar veículo; cadastrar cliente; registrar nova locação (grave em Locacoes e marque o veículo como alugado); importar contrato já existente (PDF, Word ou foto); registrar pagamentos recebidos (comprovantes); relatório financeiro (pendências e entradas do mês); registrar quilometragem (texto ou foto do painel) e troca de óleo; renovar contrato; finalizar locação; gerar contrato de locação em PDF. Se o usuário escrever só \"Juninho\" ou \"menu\", liste essas opções de forma resumida.\n\nAVISOS AUTOMÁTICOS: todo dia de manhã o sistema envia sozinho, neste mesmo chat, mensagens começando com [Juninho]: cobrança do aluguel semanal no dia de vencimento, aviso de contrato que vence em 3 dias e aviso de contrato que vence hoje. Você não envia esses avisos e não os vê na conversa. Quando o usuário responder a um aviso de contrato que vence hoje (finalizar ou renovar), siga FINALIZAR LOCAÇÃO ou RENOVAR CONTRATO. Também são automáticos, ao registrar o km, os avisos de troca de óleo e de limite mensal de km aos sócios.\n\nREGRAS GERAIS:\n- Consulte a planilha antes de afirmar qualquer coisa sobre veículos, clientes, locações ou pagamentos.\n- O aluguel é sempre semanal: nunca fale em diária.\n- Se faltar algum dado para gravar, pergunte só o que falta, tudo em uma única mensagem. Antes de gravar ou alterar algo, a menos que o usuário já tenha dado todos os dados de forma clara, resuma e peça confirmação.\n- Placa sempre em maiúsculas. Datas em dd/MM/yyyy. Valores em reais, só o número ao gravar. CPF gravado só com números (11 dígitos). Telefone gravado só com números, com DDD. dia_vencimento gravado em minúsculas, com acento: segunda, terça, quarta, quinta, sexta, sábado ou domingo. Quilometragem sempre só dígitos (sem ponto).\n- IDs novos: id_locacao no formato LOC-ddMMyyHHmm e id_pagamento no formato PAG-ddMMyyHHmm, usando a data e hora atuais.\n- As ferramentas de atualização sobrescrevem os campos que você informar: leia a linha antes e repita os valores atuais dos campos que não mudam.\n- Confira o resultado das ferramentas antes de dizer que gravou. Se uma ferramenta falhar, diga que não conseguiu e não finja sucesso.\n- IMAGENS: se receber foto de documento (CNH, RG, documento do veículo), extraia só o que estiver legível, mostre os dados e peça confirmação antes de gravar. Não grave dado ilegível ou duvidoso. Foto de painel de veículo é leitura de km: siga QUILOMETRAGEM E ÓLEO.\n\nCADASTRO DE VEÍCULO:\n- Dados: placa, marca, modelo, ano, cor e RENAVAM. observacoes é opcional. NÃO pergunte nem grave valor de aluguel no veículo: o valor semanal é definido só na locação.\n- Peça também, na mesma mensagem, o km atual e o km e a data da última troca de óleo (podem ficar para depois). Depois de gravar o veículo, com esses dados emita os marcadores de QUILOMETRAGEM E ÓLEO.\n- Verifique antes se a placa já existe e avise em vez de duplicar.\n- Novo veículo entra com status disponível e cadastrado_em de hoje.\n\nCADASTRO DE CLIENTE:\n- Dados: nome completo, CPF, RG, nacionalidade, profissão, telefone (com DDD) e endereço completo (rua, número, bairro, cidade/UF, CEP).\n- Verifique antes se o CPF já existe em Clientes. Se existir, mostre o cadastro e pergunte se quer atualizar algo, em vez de duplicar.\n- cadastrado_em de hoje.\n\nNOVA LOCAÇÃO:\n1. Veículo: precisa existir em Veiculos e estar disponível. Se estiver alugado, avise e não registre. Se não existir, siga o cadastro de veículo.\n2. Cliente: precisa existir em Clientes (busca por CPF; se o usuário só deu o nome, busque por nome). Se não existir, siga o cadastro de cliente.\n3. Dados da locação: data_inicio, data_fim_prevista (vencimento do contrato; ou prazo em dias, que você converte em data), valor_semanal (obrigatório, sempre pergunte: não existe valor padrão), km_inicio (km do painel na entrega, obrigatório, sempre pergunte), caucao (padrão: R$ 1.500,00) e dia_vencimento (dia da semana em que vence cada aluguel; padrão: terça). Limite de km e valor do km excedente: o modelo de contrato usa 6.000 km/mês e R$ 0,50 por km excedente; use esses valores (limite_km_mensal 6000, valor_km_excedente 0.50) e mostre-os na confirmação, a menos que o usuário diga outros valores para este contrato. Se o veículo não tiver km_ultima_troca_oleo, pergunte na mesma mensagem o km e a data da última troca de óleo (pode ficar para depois).\n4. Resuma tudo em uma única confirmação, incluindo os cadastros novos. Depois grave em Locacoes (status ativa, contrato_url vazio, cliente_nome, cliente_telefone e cliente_documento vindos de Clientes, mais valor_semanal, km_inicio, limite_km_mensal, valor_km_excedente, caucao e dia_vencimento) e marque o veículo como alugado, repetindo os demais campos atuais da linha do veículo. Por fim emita [[KM:PLACA|km_inicio]] para atualizar o km do veículo (e [[OLEO:...]] se o usuário informou a troca de óleo).\n\nIMPORTAR CONTRATO EXISTENTE (PDF, Word ou foto de contrato de locação já assinado e em vigência, ou pedido como \"cadastra/importa esse contrato\"):\n1. Extraia do documento: locatário (nome, CPF, RG, nacionalidade, profissão, endereço, telefone), veículo (placa, marca, modelo, ano, cor, RENAVAM), data_inicio, data_fim_prevista, valor_semanal, caucao, dia_vencimento, limite de km mensal e valor por km excedente (cláusula de limite de quilometragem; se o documento não trouxer, use 6000 e 0.50 e avise). Não grave dado ilegível; peça só o que faltar, em uma mensagem. Trate um contrato por vez.\n2. Consulte Clientes (CPF), Veiculos (placa) e Locacoes (locação ativa dessa placa ou cliente). Se a locação já existir, avise e não duplique (ofereça atualizar o que estiver diferente). Se o veículo já estiver alugado em outra locação ativa, avise.\n3. Se data_fim_prevista já passou, pergunte se a locação ainda está ativa antes de gravar como ativa.\n4. Faça uma única confirmação curta: o que será criado (cliente novo, veículo novo, locação). Na mesma mensagem, pergunte até quando o cliente já pagou: \"tudo em dia\", \"nada pago\" ou os pagamentos (datas e valores); o km do veículo na entrega (km_inicio, do laudo de vistoria; pode ser \"não sei\"); e o km atual e o km e a data da última troca de óleo (podem ficar para depois).\n5. Confirmado: grave cliente e veículo se forem novos (veículo com status alugado; se já existir, atualize para alugado repetindo os demais campos), grave a locação (status ativa, contrato_url vazio, id_locacao novo, km_inicio se informado, limite_km_mensal e valor_km_excedente LIDOS DO CONTRATO, na cláusula de limite de quilometragem mensal) e registre os pagamentos informados em Pagamentos, com observacoes \"importado\". Se o usuário disser \"tudo em dia\" sem detalhar, registre um pagamento por semana vencida (data = cada vencimento até hoje, valor = valor_semanal, forma_pagamento vazia) e avise o total registrado. Se disser \"nada pago\", não registre pagamentos. Com o km atual e a troca de óleo informados, emita os marcadores de QUILOMETRAGEM E ÓLEO.\n6. Responda em uma linha com o id da locação e quantos pagamentos foram registrados. Não gere contrato novo nem use [[CONTRATO]], a menos que o usuário peça.\n\nQUILOMETRAGEM E ÓLEO (o sistema calcula, grava e avisa; você só identifica os dados e emite marcadores):\n- Km atual: quando o usuário informar o km de um veículo (texto ou foto do painel), identifique a placa (se não disse qual carro, pergunte) e termine a resposta com [[KM:PLACA|km]], km só com dígitos. Exemplo: [[KM:ABC1D23|45230]]. Não consulte nem calcule nada: o sistema grava no histórico, atualiza o veículo, avisa os sócios sobre troca de óleo (a cada 10.000 km) e limite mensal de km da locação, e responde com o resumo.\n- Foto do painel: leia o odômetro total (não o parcial/trip). Se estiver ilegível ou duvidoso, peça outra foto ou o número. Com foto, confirme em uma linha (\"ABC1D23: 45.230 km. Confirma?\") e só emita o marcador depois do \"sim\". Com km informado em texto de forma clara, emita direto.\n- Troca de óleo: ao informarem a última troca de óleo, precisa do km do veículo na troca e da data; peça o que faltar. Emita [[OLEO:PLACA|km|dd/MM/yyyy]]. Pode emitir [[KM:...]] e [[OLEO:...]] juntos na mesma resposta, só para a mesma placa. Quando for troca nova, o aviso de óleo recomeça a contar dos 10.000 km.\n- Use marcador de km/óleo de um veículo por mensagem; se vierem vários veículos, trate um e peça para enviar o próximo. O texto antes do marcador deve ser vazio ou uma frase curta.\n- Consultas (\"qual o km do X\", \"quando troca o óleo\"): consulte Veiculos e responda em uma linha; a troca vence em km_ultima_troca_oleo + 10.000.\n- Limite de km: cada locação tem seu limite_km_mensal e valor_km_excedente (da cláusula do contrato; modelo padrão 6.000 km e R$ 0,50). Ao registrar ou importar uma locação, preencha esses campos com o que o contrato diz. O cálculo e o aviso (só para o Rafael e o pai) são automáticos a cada km registrado. Se o sistema avisar que a locação não tem km inicial, peça o km da entrega e atualize a locação (km_inicio).\n\nCOMPROVANTES DE PAGAMENTO (foto ou PDF de pix/ted/recibo de aluguel):\n1. Extraia valor, data do pagamento, nome do pagador e forma. Não grave dado ilegível.\n2. Se o comprovante não trouxer o nome do cliente (ou o pagador não for claramente um cliente) ou não trouxer a data, peça só o que faltar, em uma mensagem. Se o usuário já disse o cliente ou a data no texto, use.\n3. Identifique a locação ativa do cliente em Locacoes (pergunte se houver mais de uma ou nenhuma).\n4. Consulte Pagamentos: se já houver pagamento da mesma locação com mesma data e valor, avise e não grave de novo.\n5. Confirme em uma linha (\"Cliente, R$ valor, dd/MM, forma. Registrar?\"). Se o valor for diferente do valor_semanal da locação, avise na mesma linha.\n6. Confirmado: grave em Pagamentos (id_pagamento, id_locacao, cliente_nome, placa, data_pagamento, valor só número, forma_pagamento, referencia opcional, registrado_em de hoje). Responda em uma linha.\nSe o usuário só informar um pagamento por texto (ex.: \"João pagou 650 hoje no pix\"), siga os mesmos passos.\n\nRELATÓRIO FINANCEIRO:\n- Quando pedirem pendências, quem está devendo, entradas, recebimentos, resumo financeiro ou relatório, NÃO consulte nem calcule nada: o sistema monta o relatório sozinho. Responda só com o marcador no fim, sem texto:\n  [[RELATORIO:pendencias]] (o que está pendente de pagamento)\n  [[RELATORIO:entradas]] (pagamentos recebidos no mês atual)\n  [[RELATORIO:geral]] (os dois juntos; use se o pedido for genérico)\n- Para entradas de outro mês, acrescente o mês: [[RELATORIO:entradas|09/2026]].\n- Use no máximo um marcador de relatório por mensagem e não o use junto com [[CONTRATO]].\n- Pendência = semanas vencidas e ainda não cobertas por pagamentos registrados em Pagamentos. Se perguntarem por que um cliente aparece pendente, explique em uma frase que falta registrar o pagamento.\n\nFINALIZAR LOCAÇÃO:\n- Identifique a locação: se o usuário citar id, placa ou cliente, use a locação ativa correspondente. Se disser só \"finalizar\", consulte Locacoes e pegue as ativas com data_fim_prevista igual a hoje: se for uma só, é ela; se forem várias, liste id, cliente e placa e pergunte qual.\n- Consulte Locacoes e Pagamentos dessa locação e avise se houver aluguel pendente (semanas vencidas desde data_inicio menos o valor já pago).\n- Pergunte o km do painel na devolução (junto com a confirmação) e, depois de finalizar, termine com [[KM:PLACA|km|ID_DA_LOCACAO]] (ex.: [[KM:ABC1D23|45230|LOC-3010261647]]) para registrar a leitura e apurar o limite de km do último período.\n- Informe a caução paga pelo cliente (campo caucao) como o valor a devolver, lembrando que, pelo contrato, a devolução ocorre em até 40 dias e pode haver desconto de multas, pendências ou danos. Peça confirmação.\n- Confirmado: atualize a locação para status finalizada (repetindo os demais campos atuais) e marque o veículo como disponível (repetindo os demais campos atuais da linha do veículo). Confira os resultados antes de dizer que finalizou.\n\nRENOVAR CONTRATO:\n- Identifique a locação como em FINALIZAR LOCAÇÃO.\n- Peça, em uma única mensagem, o que faltar: novo valor semanal, novo dia de vencimento do aluguel (dia da semana) e novo prazo de validade do contrato (em dias ou data final). A caução é a mesma da locação: não pergunte.\n- Se o prazo vier em dias, a nova data_fim_prevista é a data_fim_prevista atual mais esses dias (confira a conta).\n- Resuma (cliente, placa, valor semanal, dia de vencimento, nova data de fim, caução mantida em R$ X) e peça confirmação. Depois atualize a locação (status ativa, data_fim_prevista, valor_semanal, dia_vencimento, repetindo o contrato_url, o km_inicio, o limite_km_mensal e o valor_km_excedente atuais), confira o resultado e diga que, se quiser o contrato atualizado em PDF, é só pedir \"contrato\".\n\nCONTRATOS:\n\nQuando gerar:\n- Só inicie um contrato se a mensagem contiver \"contrato\", \"pdf\" ou \"minuta\". Caso contrário, peça ao usuário para repetir o pedido usando a palavra \"contrato\".\n- Exceção: se o pedido de contrato já foi feito e você está coletando dados ou esperando confirmação, as respostas seguintes (dados, \"sim\", \"pode\") continuam esse mesmo pedido e não precisam da palavra.\n- Gere um único contrato por mensagem.\n- Se o usuário enviar um contrato (PDF, Word ou foto) para cadastrar, isso é IMPORTAR CONTRATO EXISTENTE, não geração de contrato.\n\nVocê NÃO escreve o texto do contrato. O sistema monta o contrato sozinho, a partir de um modelo formatado, usando os dados da planilha (Clientes, Veiculos e Locacoes), e envia o PDF no chat. Seu trabalho é garantir que a planilha esteja completa e apontar a locação.\n\nPreparar os dados (nesta ordem):\n1. Veículo: busque a placa em Veiculos. Se não existir, peça os dados do cadastro de veículo. Se existir mas faltar marca, modelo, ano, cor ou RENAVAM, peça só o que falta.\n2. Cliente: busque em Clientes pelo CPF ou, se não tiver, pelo nome. Se não existir, peça os dados do cadastro de cliente. Se existir mas faltar nome, CPF, RG, nacionalidade, profissão ou endereço, peça só o que falta.\n3. Locação: busque em Locacoes uma locação ativa desse cliente com essa placa. Se existir, use-a (se faltar data_inicio, data_fim_prevista, valor_semanal, caucao ou dia_vencimento, peça só o que falta e atualize a locação). Se não existir, siga a NOVA LOCAÇÃO (pedindo data de início, prazo, valor semanal, km de entrega, caução e dia de vencimento) e registre-a. Se mais de uma locação combinar, liste id, cliente, placa e data_inicio e pergunte qual. Se só houver locação finalizada, avise antes de gerar.\n4. Prorrogação: pergunte, na mesma mensagem em que pedir o que falta, se o contrato terá prorrogação do primeiro pagamento (a LOCADORA aceita receber a primeira semana adiantada depois, em até N dias contados da assinatura) e, se sim, em quantos dias. Se o usuário já informou, não pergunte. Se não houver prorrogação, o contrato sai sem esse parágrafo.\n5. Pergunte tudo o que falta em uma única mensagem e faça uma única confirmação para todas as gravações (veículo, cliente e locação).\n6. Depois de gravar e conferir o resultado das ferramentas, finalize o pedido. Se alguma gravação falhar, avise e não finalize. Nunca invente dados, e não gere contrato com campos em branco: a planilha precisa estar completa.\n\nSaída ao finalizar:\n- Escreva só \"Segue o contrato. Anexe o laudo de vistoria.\" e, no fim da resposta, o marcador com o id da locação: [[CONTRATO:LOC-2910261736]]\n- Se houver prorrogação, inclua os dias após uma barra: [[CONTRATO:LOC-2910261736|30]]\n- Não escreva o texto do contrato, não use outros marcadores e coloque o marcador só quando o contrato deve ser gerado agora. O PDF segue em outra mensagem.\n- O modelo do contrato é fixo (cláusulas, multa, limite de km, dados bancários). Se pedirem para mudar alguma cláusula, explique em uma frase que isso é feito no modelo do contrato e não por aqui.",
+          "maxIterations": 20,
+          "enableStreaming": false
+        }
+      },
+      "id": "9dadd5b0-ae33-4f1e-a316-d8d431b33134",
+      "name": "Agente Juninho",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2960,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "claude-haiku-5-5"
+        },
+        "options": {
+          "maxTokensToSample": 4000
+        }
+      },
+      "id": "1d4242fe-de39-4752-8718-073060774429",
+      "name": "Claude (Haiku ou Sonnet)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        2176,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $(\"Extrair Dados da Mensagem\").first().json.chatId }}",
+        "contextWindowLength": 8
+      },
+      "id": "dc63fb2f-0b06-4e95-94b7-f462c716ccb2",
+      "name": "Memória da conversa",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        2352,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1",
+          "cachedResultName": "Juninho - Locadora"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "2134477414",
+          "cachedResultName": "Veiculos"
+        },
+        "options": {}
+      },
+      "id": "932769c2-3b29-40fc-af65-47b5011c1443",
+      "name": "consultar_veiculos",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        2512,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1",
+          "cachedResultName": "Juninho - Locadora"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1245259226",
+          "cachedResultName": "Locacoes"
+        },
+        "options": {}
+      },
+      "id": "aef63555-9145-480d-9cb6-1f69d7c5c643",
+      "name": "consultar_locacoes",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        2672,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1",
+          "cachedResultName": "Juninho - Locadora"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1411045806",
+          "cachedResultName": "Pagamentos"
+        },
+        "options": {}
+      },
+      "id": "fe48c249-db3d-4bc4-893b-57812dd6d363",
+      "name": "consultar_pagamentos",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        2976,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Veiculos",
+          "mode": "list",
+          "value": "2134477414"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "placa",
+              "id": "placa",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "marca",
+              "id": "marca",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "modelo",
+              "id": "modelo",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "ano",
+              "id": "ano",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cor",
+              "id": "cor",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "renavam",
+              "id": "renavam",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "status",
+              "id": "status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "observacoes",
+              "id": "observacoes",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cadastrado_em",
+              "id": "cadastrado_em",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "ano": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('ano', 'Ano do veículo') }}",
+            "cadastrado_em": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cadastrado_em', 'Data de hoje no formato dd/MM/yyyy') }}",
+            "cor": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cor', 'Cor do veículo') }}",
+            "marca": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('marca', 'Marca do veículo') }}",
+            "modelo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('modelo', 'Modelo do veículo') }}",
+            "observacoes": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('observacoes', 'Observações, ou vazio') }}",
+            "placa": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('placa', 'Placa em maiúsculas') }}",
+            "renavam": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('renavam', 'RENAVAM do veículo') }}",
+            "status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('status', 'Status do veículo: disponível ou alugado') }}"
+          }
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "a0f7f82b-3fa6-45d9-8013-1cc3992b952d",
+      "name": "cadastrar_veiculo",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        3136,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Locacoes",
+          "mode": "list",
+          "value": "1245259226"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "id_locacao",
+              "id": "id_locacao",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "placa",
+              "id": "placa",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_nome",
+              "id": "cliente_nome",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_telefone",
+              "id": "cliente_telefone",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_documento",
+              "id": "cliente_documento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "data_inicio",
+              "id": "data_inicio",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "data_fim_prevista",
+              "id": "data_fim_prevista",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "valor_semanal",
+              "id": "valor_semanal",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "status",
+              "id": "status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "contrato_url",
+              "id": "contrato_url",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "caucao",
+              "id": "caucao",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "dia_vencimento",
+              "id": "dia_vencimento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "km_inicio",
+              "id": "km_inicio",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "limite_km_mensal",
+              "id": "limite_km_mensal",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "valor_km_excedente",
+              "id": "valor_km_excedente",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "caucao": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('caucao', 'Valor da caução paga pelo cliente em reais, só o número') }}",
+            "cliente_documento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cliente_documento', 'CPF do cliente, só números') }}",
+            "cliente_nome": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cliente_nome', 'Nome completo do cliente') }}",
+            "cliente_telefone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cliente_telefone', 'Telefone do cliente, só números com DDD') }}",
+            "contrato_url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('contrato_url', 'Link do contrato, ou vazio') }}",
+            "data_fim_prevista": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_fim_prevista', 'Data de vencimento do contrato dd/MM/yyyy') }}",
+            "data_inicio": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_inicio', 'Data de início dd/MM/yyyy') }}",
+            "dia_vencimento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('dia_vencimento', 'Dia da semana em que vence cada aluguel, em minúsculas com acento: segunda, terça, quarta, quinta, sexta, sábado ou domingo') }}",
+            "id_locacao": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('id_locacao', 'Identificador único da locação, formato LOC-ddMMyyHHmm') }}",
+            "km_inicio": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('km_inicio', 'Quilometragem do veículo na entrega ao cliente, só o número (ou vazio se não informada)') }}",
+            "limite_km_mensal": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('limite_km_mensal', 'Limite de km por mês do contrato (cláusula de limite de quilometragem), só o número. Padrão do modelo: 6000') }}",
+            "placa": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('placa', 'Placa do veículo alugado') }}",
+            "status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('status', 'Status da locação, normalmente ativa') }}",
+            "valor_km_excedente": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('valor_km_excedente', 'Valor em reais cobrado por km excedente do contrato, só o número com ponto decimal. Padrão do modelo: 0.50') }}",
+            "valor_semanal": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('valor_semanal', 'Valor do aluguel semanal em reais, só o número') }}"
+          }
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "bf88d884-9f7f-4def-91f0-e047eb18eba7",
+      "name": "registrar_locacao",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        3280,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1",
+          "cachedResultName": "Juninho - Locadora"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1411045806",
+          "cachedResultName": "Pagamentos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "id_pagamento",
+              "id": "id_pagamento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "id_locacao",
+              "id": "id_locacao",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_nome",
+              "id": "cliente_nome",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "placa",
+              "id": "placa",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "data_pagamento",
+              "id": "data_pagamento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "valor",
+              "id": "valor",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "forma_pagamento",
+              "id": "forma_pagamento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "referencia",
+              "id": "referencia",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "observacoes",
+              "id": "observacoes",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "registrado_em",
+              "id": "registrado_em",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "cliente_nome": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cliente_nome', 'Nome completo do cliente da locação') }}",
+            "data_pagamento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_pagamento', 'Data em que o pagamento foi feito, dd/MM/yyyy') }}",
+            "forma_pagamento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('forma_pagamento', 'pix, ted, dinheiro ou cartão') }}",
+            "id_locacao": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('id_locacao', 'Identificador da locação') }}",
+            "id_pagamento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('id_pagamento', 'Identificador único do pagamento, formato PAG-ddMMyyHHmm') }}",
+            "observacoes": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('observacoes', 'Observações, ou vazio') }}",
+            "placa": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('placa', 'Placa do veículo da locação') }}",
+            "referencia": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('referencia', 'Vencimento ou semana a que o pagamento se refere, ou vazio') }}",
+            "registrado_em": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('registrado_em', 'Data de hoje, dd/MM/yyyy') }}",
+            "valor": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('valor', 'Valor pago em reais, só o número') }}"
+          }
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "3e871000-0afb-4a7f-baed-c421a70c5568",
+      "name": "criar_pagamento",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        3424,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Veiculos",
+          "mode": "list",
+          "value": "2134477414"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "placa"
+          ],
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "placa",
+              "id": "placa",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "marca",
+              "id": "marca",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "modelo",
+              "id": "modelo",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "ano",
+              "id": "ano",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cor",
+              "id": "cor",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "renavam",
+              "id": "renavam",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "status",
+              "id": "status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "observacoes",
+              "id": "observacoes",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cadastrado_em",
+              "id": "cadastrado_em",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "ano": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('ano', 'Ano (repita o valor atual se não mudar)') }}",
+            "cor": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cor', 'Cor (repita o valor atual se não mudar)') }}",
+            "marca": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('marca', 'Marca (repita o valor atual se não mudar)') }}",
+            "modelo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('modelo', 'Modelo (repita o valor atual se não mudar)') }}",
+            "observacoes": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('observacoes', 'Observações (repita o valor atual se não mudar)') }}",
+            "placa": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('placa', 'Placa do veículo a atualizar (chave da linha)') }}",
+            "renavam": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('renavam', 'RENAVAM (repita o valor atual se não mudar)') }}",
+            "status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('status', 'Novo status: disponível ou alugado') }}"
+          }
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "1c5efd73-9541-48aa-8777-f9fb6b87d801",
+      "name": "atualizar_veiculo",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        3568,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Locacoes",
+          "mode": "list",
+          "value": "1245259226"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id_locacao"
+          ],
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "id_locacao",
+              "id": "id_locacao",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "placa",
+              "id": "placa",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_nome",
+              "id": "cliente_nome",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_telefone",
+              "id": "cliente_telefone",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_documento",
+              "id": "cliente_documento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "data_inicio",
+              "id": "data_inicio",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "data_fim_prevista",
+              "id": "data_fim_prevista",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "valor_semanal",
+              "id": "valor_semanal",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "status",
+              "id": "status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "contrato_url",
+              "id": "contrato_url",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "caucao",
+              "id": "caucao",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "dia_vencimento",
+              "id": "dia_vencimento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "km_inicio",
+              "id": "km_inicio",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "limite_km_mensal",
+              "id": "limite_km_mensal",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "valor_km_excedente",
+              "id": "valor_km_excedente",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "contrato_url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('contrato_url', 'Link do contrato (repita o atual se não mudar)') }}",
+            "data_fim_prevista": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_fim_prevista', 'Data de vencimento do contrato dd/MM/yyyy (repita a atual se não mudar)') }}",
+            "dia_vencimento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('dia_vencimento', 'Dia da semana de vencimento do aluguel, em minúsculas com acento (repita o atual se não mudar)') }}",
+            "id_locacao": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('id_locacao', 'Identificador da locação a atualizar (chave da linha)') }}",
+            "km_inicio": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('km_inicio', 'Km do veículo na entrega (repita o atual se não mudar)') }}",
+            "limite_km_mensal": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('limite_km_mensal', 'Limite de km por mês do contrato (repita o atual se não mudar)') }}",
+            "status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('status', 'Status da locação: ativa ou finalizada (repita o atual se não mudar)') }}",
+            "valor_km_excedente": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('valor_km_excedente', 'Valor por km excedente (repita o atual se não mudar)') }}",
+            "valor_semanal": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('valor_semanal', 'Valor do aluguel semanal em reais, só o número (repita o atual se não mudar)') }}"
+          }
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "8e5eacb0-9d49-4eb2-92b2-77a3c2fbbcbd",
+      "name": "atualizar_locacao",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        3712,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1",
+          "cachedResultName": "Juninho - Locadora"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1411045806",
+          "cachedResultName": "Pagamentos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id_pagamento"
+          ],
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "id_pagamento",
+              "id": "id_pagamento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "id_locacao",
+              "id": "id_locacao",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_nome",
+              "id": "cliente_nome",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "placa",
+              "id": "placa",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "data_pagamento",
+              "id": "data_pagamento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "valor",
+              "id": "valor",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "forma_pagamento",
+              "id": "forma_pagamento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "referencia",
+              "id": "referencia",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "observacoes",
+              "id": "observacoes",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "registrado_em",
+              "id": "registrado_em",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "data_pagamento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_pagamento', 'Data do pagamento dd/MM/yyyy (repita o valor atual se não mudar)') }}",
+            "forma_pagamento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('forma_pagamento', 'Forma de pagamento (repita o valor atual se não mudar)') }}",
+            "id_pagamento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('id_pagamento', 'Identificador do pagamento a atualizar (chave da linha)') }}",
+            "observacoes": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('observacoes', 'Observações (repita o valor atual se não mudar)') }}",
+            "referencia": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('referencia', 'Referência (repita o valor atual se não mudar)') }}",
+            "valor": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('valor', 'Valor em reais, só o número (repita o valor atual se não mudar)') }}"
+          }
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "3c05c184-b13c-4dff-bb5c-b053d3be11a8",
+      "name": "atualizar_pagamento",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        3872,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "p1",
+              "name": "chatId",
+              "type": "string",
+              "value": "={{ $(\"Extrair Dados da Mensagem\").first().json.chatId }}"
+            },
+            {
+              "id": "p2",
+              "name": "sessao",
+              "type": "string",
+              "value": "={{ $(\"Extrair Dados da Mensagem\").first().json.sessao }}"
+            },
+            {
+              "id": "p3",
+              "name": "resposta",
+              "type": "string",
+              "value": "={{ \"[Juninho] \" + ($json.output.replace(/\\[\\[(CONTRATO|RELATORIO|KM|OLEO|ARQUIVAR):[^\\]]*\\]\\]/g, \"\").trim() || (/\\[\\[CONTRATO:/.test($json.output) ? \"Segue o contrato.\" : /\\[\\[(RELATORIO|KM|OLEO|ARQUIVAR):/.test($json.output) ? \"\" : \"Não consegui responder agora. Pode repetir?\")) }}"
+            },
+            {
+              "id": "p4",
+              "name": "contratoId",
+              "type": "string",
+              "value": "={{ (($json.output.match(/\\[\\[CONTRATO:([^\\]|]*)/) || [])[1] || \"\").trim() }}"
+            },
+            {
+              "id": "p5",
+              "name": "prorrogacaoDias",
+              "type": "string",
+              "value": "={{ ($json.output.match(/\\[\\[CONTRATO:[^\\]|]*\\|\\s*(\\d+)/) || [])[1] || \"0\" }}"
+            },
+            {
+              "id": "p6",
+              "name": "temContrato",
+              "type": "boolean",
+              "value": "={{ /\\[\\[CONTRATO:\\s*[^\\]|\\s][^\\]]*\\]\\]/.test($json.output) }}"
+            },
+            {
+              "id": "p7",
+              "name": "temRelatorio",
+              "type": "boolean",
+              "value": "={{ /\\[\\[RELATORIO:\\s*[a-zA-Z]+/.test($json.output) }}"
+            },
+            {
+              "id": "p8",
+              "name": "relatorioTipo",
+              "type": "string",
+              "value": "={{ (($json.output.match(/\\[\\[RELATORIO:\\s*([a-zA-Z]+)/) || [])[1] || \"geral\").toLowerCase() }}"
+            },
+            {
+              "id": "p9",
+              "name": "relatorioMes",
+              "type": "string",
+              "value": "={{ ($json.output.match(/\\[\\[RELATORIO:[^\\]|]*\\|\\s*(\\d{1,2}\\/\\d{4})/) || [])[1] || \"\" }}"
+            },
+            {
+              "id": "p10",
+              "name": "temKm",
+              "type": "boolean",
+              "value": "={{ /\\[\\[(KM|OLEO):\\s*[^\\]|\\s]/.test($json.output) }}"
+            },
+            {
+              "id": "p11",
+              "name": "kmPlaca",
+              "type": "string",
+              "value": "={{ (($json.output.match(/\\[\\[KM:\\s*([^|\\]]+)/) || $json.output.match(/\\[\\[OLEO:\\s*([^|\\]]+)/) || [])[1] || \"\").trim() }}"
+            },
+            {
+              "id": "p12",
+              "name": "kmValor",
+              "type": "string",
+              "value": "={{ ($json.output.match(/\\[\\[KM:[^|\\]]*\\|\\s*([\\d.,\\s]+?)\\s*(?:\\||\\]\\])/) || [])[1] || \"\" }}"
+            },
+            {
+              "id": "p13",
+              "name": "oleoKm",
+              "type": "string",
+              "value": "={{ ($json.output.match(/\\[\\[OLEO:[^|\\]]*\\|\\s*([\\d.,\\s]+?)\\s*(?:\\||\\]\\])/) || [])[1] || \"\" }}"
+            },
+            {
+              "id": "p14",
+              "name": "oleoData",
+              "type": "string",
+              "value": "={{ ($json.output.match(/\\[\\[OLEO:[^|\\]]*\\|[^|\\]]*\\|\\s*(\\d{1,2}\\/\\d{1,2}\\/\\d{4})/) || [])[1] || \"\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5fa03a66-1da7-417e-8404-b880352a2992",
+      "name": "Preparar Resposta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3872,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://SEU_SERVIDOR_WAHA:3000/api/sendText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpTemplatedCustomAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { chatId: $json.chatId, text: $json.resposta, session: $json.sessao } }}",
+        "options": {}
+      },
+      "id": "a255a9d3-a4ec-412a-9f8a-709c7c90435a",
+      "name": "Enviar Resposta (WAHA)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        5216,
+        -32
+      ],
+      "credentials": {
+        "httpTemplatedCustomAuth": {
+          "id": "",
+          "name": "WAHA API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "g1",
+              "leftValue": "={{ $json.temContrato }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "626d6d59-fa5c-497c-8345-d07d1384f3db",
+      "name": "Gera contrato?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        2464,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "destinationKey": "pdf64",
+        "options": {}
+      },
+      "id": "b5a0eca6-014b-4a54-b8f0-98764bc43c72",
+      "name": "Converter PDF para base64",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.2,
+      "position": [
+        4480,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://SEU_SERVIDOR_WAHA:3000/api/sendFile",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpTemplatedCustomAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { chatId: $(\"Preparar Resposta\").first().json.chatId, session: $(\"Preparar Resposta\").first().json.sessao, caption: \"[Juninho] \" + $(\"Montar dados do contrato\").first().json.titulo, file: { mimetype: \"application/pdf\", filename: $(\"Montar dados do contrato\").first().json.titulo + \".pdf\", data: $json.pdf64 } } }}",
+        "options": {}
+      },
+      "id": "3cc61028-1d58-455c-bc1f-71e45b0e23b5",
+      "name": "Enviar PDF (WAHA)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        4704,
+        560
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "httpTemplatedCustomAuth": {
+          "id": "",
+          "name": "WAHA API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "l1",
+              "name": "chatId",
+              "type": "string",
+              "value": "={{ $(\"Preparar Resposta\").first().json.chatId }}"
+            },
+            {
+              "id": "l2",
+              "name": "sessao",
+              "type": "string",
+              "value": "={{ $(\"Preparar Resposta\").first().json.sessao }}"
+            },
+            {
+              "id": "l3",
+              "name": "resposta",
+              "type": "string",
+              "value": "={{ \"[Juninho] Não consegui enviar o PDF por aqui. O contrato está no Google Docs: https://docs.google.com/document/d/\" + $(\"Criar documento do contrato\").first().json.id + \"/edit\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5a93b97c-096d-4e62-ba37-6404a8118cc7",
+      "name": "Mensagem com link do contrato",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        4928,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Clientes",
+          "mode": "list",
+          "value": "249963231"
+        },
+        "options": {}
+      },
+      "id": "914a69f1-cd51-44d6-9f1b-922fbd9edc5d",
+      "name": "consultar_clientes",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        4016,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Clientes",
+          "mode": "list",
+          "value": "249963231"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_documento",
+              "id": "cliente_documento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_nome",
+              "id": "cliente_nome",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "nacionalidade",
+              "id": "nacionalidade",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "profissao",
+              "id": "profissao",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "rg",
+              "id": "rg",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "telefone",
+              "id": "telefone",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "endereco",
+              "id": "endereco",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cadastrado_em",
+              "id": "cadastrado_em",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "cadastrado_em": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cadastrado_em', 'Data de hoje no formato dd/MM/yyyy') }}",
+            "cliente_documento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cliente_documento', 'CPF só com números (11 dígitos)') }}",
+            "cliente_nome": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cliente_nome', 'Nome completo do cliente') }}",
+            "endereco": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('endereco', 'Endereço completo: rua, número, bairro, cidade/UF, CEP') }}",
+            "nacionalidade": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('nacionalidade', 'Nacionalidade') }}",
+            "profissao": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('profissao', 'Profissão') }}",
+            "rg": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('rg', 'RG com órgão emissor, se informado') }}",
+            "telefone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('telefone', 'Telefone só com números, com DDD') }}"
+          }
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "30d00874-1ebc-40a4-a495-8e9a174026d5",
+      "name": "cadastrar_cliente",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        4160,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Clientes",
+          "mode": "list",
+          "value": "249963231"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "cliente_documento"
+          ],
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_documento",
+              "id": "cliente_documento",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cliente_nome",
+              "id": "cliente_nome",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "nacionalidade",
+              "id": "nacionalidade",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "profissao",
+              "id": "profissao",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "rg",
+              "id": "rg",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "telefone",
+              "id": "telefone",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "endereco",
+              "id": "endereco",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "cadastrado_em",
+              "id": "cadastrado_em",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "cliente_documento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cliente_documento', 'CPF do cliente a atualizar (chave da linha), só números') }}",
+            "cliente_nome": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cliente_nome', 'Nome completo (repita o atual se não mudar)') }}",
+            "endereco": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('endereco', 'Endereço completo (repita o atual se não mudar)') }}",
+            "nacionalidade": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('nacionalidade', 'Nacionalidade (repita a atual se não mudar)') }}",
+            "profissao": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('profissao', 'Profissão (repita a atual se não mudar)') }}",
+            "rg": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('rg', 'RG (repita o atual se não mudar)') }}",
+            "telefone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('telefone', 'Telefone só com números (repita o atual se não mudar)') }}"
+          }
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "381a249a-eced-4dfc-932a-b93d49c104cd",
+      "name": "atualizar_cliente",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        4304,
+        672
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "b08a883e-5b03-402d-bfba-32745cce4654",
+      "name": "Todo dia às 8h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -512,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Locacoes",
+          "mode": "list",
+          "value": "1245259226"
+        },
+        "options": {}
+      },
+      "id": "c102d6ff-87fa-4122-9180-7a38f0f32356",
+      "name": "Ler locações",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -288,
+        912
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Veiculos",
+          "mode": "list",
+          "value": "2134477414"
+        },
+        "options": {}
+      },
+      "id": "3fcc89fa-2373-46f0-9e75-165f42626d1d",
+      "name": "Ler veículos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -64,
+        912
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const DESTINATARIOS = ['5500900000002@c.us', '5500900000003@c.us'];\nconst SESSAO = 'default';\nconst TZ = 'America/Sao_Paulo';\n\nconst hoje = $now.setZone(TZ).startOf('day');\nconst nomesDia = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];\nconst diaHoje = nomesDia[hoje.weekday % 7];\n\nfunction semAcento(s) {\n  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();\n}\nfunction chavePlaca(s) {\n  return semAcento(s).replace(/[^a-z0-9]/g, '');\n}\nfunction lerData(s) {\n  const m = String(s == null ? '' : s).trim().match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n  if (!m) return null;\n  const d = hoje.set({ year: Number(m[3]), month: Number(m[2]), day: Number(m[1]) }).startOf('day');\n  return d.isValid ? d : null;\n}\nfunction paraNumero(v) {\n  let s = String(v == null ? '' : v).replace(/[^\\d.,-]/g, '');\n  if (s.includes(',')) {\n    s = s.replace(/\\./g, '').replace(',', '.');\n  } else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) {\n    s = s.replace(/\\./g, '');\n  }\n  const n = parseFloat(s);\n  return isNaN(n) ? null : n;\n}\nfunction brl(v) {\n  const n = paraNumero(v);\n  if (n === null) return 'valor não informado';\n  const partes = n.toFixed(2).split('.');\n  partes[0] = partes[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\n  return 'R$ ' + partes.join(',');\n}\n\nconst locacoes = $('Ler locações').all().map((i) => i.json);\nconst veiculos = $input.all().map((i) => i.json);\nconst porPlaca = {};\nfor (const v of veiculos) {\n  porPlaca[chavePlaca(v.placa)] = v;\n}\n\nconst saida = [];\nfunction avisar(texto) {\n  for (const d of DESTINATARIOS) {\n    saida.push({ json: { chatId: d, sessao: SESSAO, resposta: '[Juninho] ' + texto } });\n  }\n}\n\nfor (const loc of locacoes) {\n  if (semAcento(loc.status) !== 'ativa') continue;\n\n  const v = porPlaca[chavePlaca(loc.placa)] || {};\n  const carro = [v.marca, v.modelo].filter(Boolean).join(' ') || 'veículo';\n  const placa = String(loc.placa || '').toUpperCase();\n  const cliente = loc.cliente_nome || 'cliente';\n  const id = loc.id_locacao || '';\n  const tel = loc.cliente_telefone ? ' Telefone: ' + loc.cliente_telefone + '.' : '';\n  const fim = lerData(loc.data_fim_prevista);\n  const dias = fim ? Math.round(fim.diff(hoje, 'days').days) : null;\n  const dia = semAcento(loc.dia_vencimento);\n\n  if (dia && dia.startsWith(diaHoje)) {\n    avisar(\n      'Vencimento do aluguel hoje: cobrar ' + brl(loc.valor_semanal) + ' do cliente ' + cliente +\n      ', que está com o ' + carro + ' placa ' + placa + ' (locação ' + id + ').' + tel\n    );\n  }\n\n  if (dias === 3) {\n    avisar(\n      'Aviso: o contrato da locação ' + id + ' (cliente ' + cliente + ', ' + carro + ' placa ' + placa +\n      ') vence em ' + fim.toFormat('dd/MM/yyyy') + ', daqui a 3 dias.'\n    );\n  }\n\n  if (dias === 0) {\n    avisar(\n      'O contrato da locação ' + id + ' (cliente ' + cliente + ', ' + carro + ' placa ' + placa +\n      ') vence hoje, ' + fim.toFormat('dd/MM/yyyy') + '. O que fazer? Responda:\\n' +\n      '- FINALIZAR: encerra a locação e eu informo a caução a devolver ao cliente (' + brl(loc.caucao) + ').\\n' +\n      '- RENOVAR: me passe o novo valor semanal, o novo dia de vencimento do aluguel e o novo prazo do contrato. A caução continua a mesma (' + brl(loc.caucao) + ').'\n    );\n  }\n}\n\nreturn saida;\n"
+      },
+      "id": "c46868a5-94d4-4946-ae1e-6e505732e753",
+      "name": "Montar avisos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://SEU_SERVIDOR_WAHA:3000/api/sendText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpTemplatedCustomAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { chatId: $json.chatId, text: $json.resposta, session: $json.sessao } }}",
+        "options": {}
+      },
+      "id": "f1ebacb5-0c39-4964-ba21-d454f833d7fd",
+      "name": "Enviar aviso (WAHA)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        384,
+        912
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpTemplatedCustomAuth": {
+          "id": "",
+          "name": "WAHA API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $(\"Criar documento do contrato\").first().json.id }}"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "id": "073b3b8f-95d4-4864-8436-21622e1c6a9a",
+      "name": "Baixar contrato em PDF",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4256,
+        560
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Locacoes",
+          "mode": "list",
+          "value": "1245259226"
+        },
+        "options": {}
+      },
+      "id": "d2daec43-e06f-49c3-b398-8b1ea7a766f4",
+      "name": "Ler locações (contrato)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2688,
+        560
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Clientes",
+          "mode": "list",
+          "value": "249963231"
+        },
+        "options": {}
+      },
+      "id": "b7b3626a-bde4-490f-b749-a52872e4ab5b",
+      "name": "Ler clientes (contrato)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2912,
+        560
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Veiculos",
+          "mode": "list",
+          "value": "2134477414"
+        },
+        "options": {}
+      },
+      "id": "c2af07cc-6290-4159-b1f5-2bfcebdaa492",
+      "name": "Ler veículos (contrato)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3136,
+        560
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const TZ = 'America/Sao_Paulo';\nconst T_COM = 'SEU_ID_GOOGLE_2';\nconst T_SEM = 'SEU_ID_GOOGLE_3';\nconst hoje = $now.setZone(TZ).startOf('day');\nfunction semAcento(s) {\n  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();\n}\nfunction chave(s) {\n  return semAcento(s).replace(/[^a-z0-9]/g, '');\n}\nfunction txt(v) {\n  return String(v == null ? '' : v).trim();\n}\nfunction lerData(s) {\n  const m = txt(s).match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n  if (!m) return null;\n  const d = hoje.set({ year: Number(m[3]), month: Number(m[2]), day: Number(m[1]) }).startOf('day');\n  return d.isValid ? d : null;\n}\nfunction paraNumero(v) {\n  let s = String(v == null ? '' : v).replace(/[^\\d.,-]/g, '');\n  if (s.includes(',')) s = s.replace(/\\./g, '').replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s);\n  return isNaN(n) ? null : n;\n}\nconst U = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];\nconst D = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];\nconst C = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];\nfunction ate999(n) {\n  if (n === 0) return '';\n  if (n === 100) return 'cem';\n  const c = Math.floor(n / 100), r = n % 100;\n  const partes = [];\n  if (c) partes.push(C[c]);\n  if (r) {\n    if (r < 20) partes.push(U[r]);\n    else partes.push(D[Math.floor(r / 10)] + (r % 10 ? ' e ' + U[r % 10] : ''));\n  }\n  return partes.join(' e ');\n}\nfunction extenso(n) {\n  n = Math.floor(n);\n  if (n === 0) return 'zero';\n  const mil = Math.floor(n / 1000), resto = n % 1000;\n  let s = '';\n  if (mil) s = (mil === 1 ? 'um' : ate999(mil)) + ' mil';\n  if (resto) {\n    const r = ate999(resto);\n    s += mil ? (resto < 100 || resto % 100 === 0 ? ' e ' : ' ') + r : r;\n  }\n  return s;\n}\nfunction reaisExtenso(v) {\n  const n = paraNumero(v);\n  if (n === null) return null;\n  const cents = Math.round(n * 100);\n  const reais = Math.floor(cents / 100), cent = cents % 100;\n  const partes = [];\n  if (reais > 0) partes.push(extenso(reais) + (reais === 1 ? ' real' : ' reais'));\n  if (cent > 0) partes.push(extenso(cent) + (cent === 1 ? ' centavo' : ' centavos'));\n  if (!partes.length) partes.push('zero reais');\n  const br = (cents / 100).toFixed(2).split('.');\n  br[0] = br[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\n  return 'R$ ' + br.join(',') + ' (' + partes.join(' e ') + ')';\n}\nconst MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];\nfunction dataExtenso(d) {\n  return (d.day === 1 ? 'primeiro' : extenso(d.day)) + ' de ' + MESES[d.month - 1] + ' de ' + extenso(d.year);\n}\nfunction dataCurta(d) {\n  return d.toFormat('dd/MM/yyyy');\n}\nfunction cpfFmt(s) {\n  const n = txt(s).replace(/\\D/g, '');\n  if (n.length === 11) return n.slice(0, 3) + '.' + n.slice(3, 6) + '.' + n.slice(6, 9) + '-' + n.slice(9);\n  return txt(s);\n}\nfunction placaFmt(s) {\n  const p = txt(s).toUpperCase().replace(/[^A-Z0-9]/g, '');\n  return p.length === 7 ? p.slice(0, 3) + '-' + p.slice(3) : txt(s).toUpperCase();\n}\nfunction diaPlural(d) {\n  const x = semAcento(d);\n  const m = {\n    segunda: 'todas as segundas-feiras', terca: 'todas as terças-feiras', quarta: 'todas as quartas-feiras',\n    quinta: 'todas as quintas-feiras', sexta: 'todas as sextas-feiras', sabado: 'todos os sábados', domingo: 'todos os domingos',\n  };\n  const k = Object.keys(m).find((k) => x.startsWith(k));\n  return k ? m[k] : '';\n}\nconst prep = $('Preparar Resposta').first().json;\nconst idBusca = chave(prep.contratoId);\nconst prorrog = Number(prep.prorrogacaoDias) > 0 ? Number(prep.prorrogacaoDias) : 0;\nconst locs = $('Ler locações (contrato)').all().map((i) => i.json);\nconst clientes = $('Ler clientes (contrato)').all().map((i) => i.json);\nconst veiculos = $input.all().map((i) => i.json);\nconst falta = [];\nconst loc = locs.find((l) => chave(l.id_locacao) === idBusca);\nlet erro = '';\nlet campos = {};\nlet titulo = '';\nif (!loc) {\n  erro = 'não encontrei a locação ' + txt(prep.contratoId) + ' na planilha';\n} else {\n  const cli = clientes.find((c) => txt(c.cliente_documento).replace(/\\D/g, '') === txt(loc.cliente_documento).replace(/\\D/g, '') && txt(loc.cliente_documento) !== '')\n    || clientes.find((c) => semAcento(c.cliente_nome) === semAcento(loc.cliente_nome));\n  const vei = veiculos.find((v) => chave(v.placa) === chave(loc.placa));\n  if (!cli) falta.push('cliente não encontrado em Clientes');\n  if (!vei) falta.push('veículo não encontrado em Veiculos');\n  const ini = lerData(loc.data_inicio), fim = lerData(loc.data_fim_prevista);\n  if (!ini) falta.push('data_inicio');\n  if (!fim) falta.push('data_fim_prevista');\n  const semanal = reaisExtenso(loc.valor_semanal);\n  const caucao = reaisExtenso(loc.caucao);\n  if (!semanal) falta.push('valor_semanal');\n  if (!caucao) falta.push('caucao');\n  const dia = diaPlural(loc.dia_vencimento);\n  if (!dia) falta.push('dia_vencimento');\n  if (cli) {\n    for (const k of ['cliente_nome', 'nacionalidade', 'profissao', 'rg', 'cliente_documento', 'endereco']) {\n      if (!txt(cli[k])) falta.push(k + ' do cliente');\n    }\n  }\n  if (vei) {\n    for (const k of ['marca', 'modelo', 'ano', 'cor', 'renavam']) {\n      if (!txt(vei[k])) falta.push(k + ' do veículo');\n    }\n  }\n  if (falta.length) {\n    erro = 'faltam dados na planilha: ' + falta.join(', ');\n  } else {\n    const dias = Math.round(fim.diff(ini, 'days').days);\n    if (dias <= 0) {\n      erro = 'a data de fim da locação é anterior ou igual à data de início';\n    } else {\n      const nome = txt(cli.cliente_nome);\n      const placa = placaFmt(loc.placa);\n      campos = {\n        LOCATARIO_NOME: nome.toLocaleUpperCase('pt-BR'),\n        NACIONALIDADE: txt(cli.nacionalidade),\n        PROFISSAO: txt(cli.profissao),\n        RG: txt(cli.rg),\n        CPF: cpfFmt(cli.cliente_documento),\n        ENDERECO: txt(cli.endereco),\n        MARCA: txt(vei.marca).toLocaleUpperCase('pt-BR'),\n        MODELO: txt(vei.modelo),\n        ANO: txt(vei.ano),\n        COR: txt(vei.cor),\n        PLACA: placa,\n        RENAVAM: txt(vei.renavam),\n        DATA_INICIO: dataCurta(ini) + ' (' + dataExtenso(ini) + ')',\n        PRAZO_DIAS: String(dias),\n        VALOR_SEMANAL: semanal.split(' (')[0],\n        VALOR_SEMANAL_EXT: ' (' + semanal.split(' (').slice(1).join(' ('),\n        DIA_VENCIMENTO: dia,\n        CAUCAO: caucao,\n        DATA_HOJE: hoje.day + ' de ' + MESES[hoje.month - 1] + ' de ' + hoje.year,\n        PRAZO_PRORROGACAO: String(prorrog || ''),\n      };\n      titulo = ('Contrato - ' + nome + ' - ' + chave(loc.placa).toUpperCase()).replace(/[^A-Za-z0-9À-ÿ \\-]/g, '').replace(/\\s+/g, ' ').trim();\n    }\n  }\n}\nreturn [{\n  json: {\n    erro,\n    titulo,\n    modeloId: prorrog ? T_COM : T_SEM,\n    comProrrogacao: !!prorrog,\n    campos,\n  },\n}];\n"
+      },
+      "id": "caa365b9-661c-40ad-9920-2d5bdb508053",
+      "name": "Montar dados do contrato",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "d1",
+              "leftValue": "={{ $json.erro === \"\" }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "de657f4d-97ea-46d6-bf77-93436db4ae2c",
+      "name": "Dados completos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3584,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1",
+              "name": "chatId",
+              "type": "string",
+              "value": "={{ $(\"Preparar Resposta\").first().json.chatId }}"
+            },
+            {
+              "id": "e2",
+              "name": "sessao",
+              "type": "string",
+              "value": "={{ $(\"Preparar Resposta\").first().json.sessao }}"
+            },
+            {
+              "id": "e3",
+              "name": "resposta",
+              "type": "string",
+              "value": "={{ \"[Juninho] Não consegui gerar o contrato: \" + ($json.erro || \"falha ao copiar o modelo no Google Drive\") + \".\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0a8a7d95-5c64-40b5-a07c-60791d8d2a20",
+      "name": "Mensagem de erro do contrato",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        4608,
+        992
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.modeloId }}"
+        },
+        "name": "={{ $json.titulo }}",
+        "options": {}
+      },
+      "id": "4279b711-8c19-4c46-bcb3-43cd26cbff1a",
+      "name": "Criar documento do contrato",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3808,
+        560
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "replaceAll",
+              "text": "{{LOCATARIO_NOME}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.LOCATARIO_NOME }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{NACIONALIDADE}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.NACIONALIDADE }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{PROFISSAO}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.PROFISSAO }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{RG}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.RG }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{CPF}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.CPF }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{ENDERECO}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.ENDERECO }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{MARCA}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.MARCA }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{MODELO}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.MODELO }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{ANO}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.ANO }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{COR}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.COR }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{PLACA}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.PLACA }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{RENAVAM}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.RENAVAM }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{DATA_INICIO}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.DATA_INICIO }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{PRAZO_DIAS}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.PRAZO_DIAS }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{VALOR_SEMANAL_EXT}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.VALOR_SEMANAL_EXT }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{VALOR_SEMANAL}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.VALOR_SEMANAL }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{DIA_VENCIMENTO}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.DIA_VENCIMENTO }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{CAUCAO}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.CAUCAO }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{DATA_HOJE}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.DATA_HOJE }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{PRAZO_PRORROGACAO}}",
+              "replaceText": "={{ $(\"Montar dados do contrato\").first().json.campos.PRAZO_PRORROGACAO }}",
+              "matchCase": true
+            }
+          ]
+        }
+      },
+      "id": "c09520ce-40c9-4e51-be98-d606b48f4c9f",
+      "name": "Preencher contrato",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        4032,
+        560
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "",
+          "name": "Google Docs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "au1",
+              "leftValue": "={{ $json.temAudio }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "178c86fc-bd5c-4d14-a2d5-e6e71a269aa1",
+      "name": "Tem áudio?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        784,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ \"http://SEU_SERVIDOR_WAHA:3000\" + $json.mediaPath }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpTemplatedCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "93fcef0f-ba21-4ac6-82f9-a51058517d9b",
+      "name": "Baixar áudio (WAHA)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1456,
+        192
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "httpTemplatedCustomAuth": {
+          "id": "",
+          "name": "WAHA API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {
+          "language": "pt"
+        }
+      },
+      "id": "253b5eb0-3561-4688-9a7a-117717e06c3e",
+      "name": "Transcrever áudio",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        1792,
+        32
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "av1",
+              "name": "chatId",
+              "type": "string",
+              "value": "={{ $(\"Extrair Dados da Mensagem\").first().json.chatId }}"
+            },
+            {
+              "id": "av2",
+              "name": "sessao",
+              "type": "string",
+              "value": "={{ $(\"Extrair Dados da Mensagem\").first().json.sessao }}"
+            },
+            {
+              "id": "av3",
+              "name": "resposta",
+              "type": "string",
+              "value": "[Juninho] Não consegui ouvir esse áudio. Pode mandar de novo ou escrever a mensagem?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1a1fbb71-858c-4f7e-87a8-f2951928dbed",
+      "name": "Aviso de áudio",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2096,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "pd1",
+              "leftValue": "={{ $json.temPdf }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "1d7f1de1-230a-41a5-9363-44a1d1e6aed9",
+      "name": "Tem PDF?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1328,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ \"http://SEU_SERVIDOR_WAHA:3000\" + $json.mediaPath }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpTemplatedCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "1c008470-562c-4498-93fe-15dbe9207d04",
+      "name": "Baixar documento (WAHA)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1552,
+        -336
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "httpTemplatedCustomAuth": {
+          "id": "",
+          "name": "WAHA API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "claude-haiku-5-5"
+        },
+        "text": "Este PDF foi enviado por WhatsApp a uma locadora de veículos. Identifique o tipo de documento (RG, CNH, CPF, comprovante de endereço, CRLV/documento do veículo, comprovante de pagamento, contrato de locação ou outro). Liste os dados legíveis no formato \"campo: valor\", um por linha, copiando números, datas, valores e nomes exatamente como aparecem. Para documento de veículo inclua placa, RENAVAM, marca/modelo, ano, cor e proprietário. Para contrato de locação inclua: locador, locatário (nome, CPF, RG, nacionalidade, profissão, endereço, telefone), veículo (placa, marca, modelo, ano, cor, RENAVAM), data de início, prazo ou data final, valor semanal, caução, dia de vencimento do aluguel, forma de pagamento, limite de quilometragem mensal (km por mês) e valor cobrado por km excedente (cláusula de limite de quilometragem), e km do veículo na entrega se constar. Para comprovante de pagamento inclua valor, data, pagador, recebedor e forma. Se algo estiver ilegível, escreva \"ilegível\". Responda direto, sem pensar em voz alta e sem comentários.",
+        "inputType": "binary",
+        "options": {
+          "maxTokens": 8000
+        }
+      },
+      "id": "8b2d9016-5dfe-433d-947e-62a5cbf1dfb9",
+      "name": "Ler documento",
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        -336
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "ot1",
+              "leftValue": "={{ $json.temOutro }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "45cb2789-634d-4778-8c2e-a70d6bfe69a0",
+      "name": "Tem outro anexo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1552,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "an1",
+              "name": "chatId",
+              "type": "string",
+              "value": "={{ $json.chatId }}"
+            },
+            {
+              "id": "an2",
+              "name": "sessao",
+              "type": "string",
+              "value": "={{ $json.sessao }}"
+            },
+            {
+              "id": "an3",
+              "name": "resposta",
+              "type": "string",
+              "value": "[Juninho] Leio PDF, Word, fotos e áudios. Pode enviar nesses formatos?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3dc60ec4-7a69-4865-b73f-1e283065d917",
+      "name": "Aviso de anexo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1776,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ad1",
+              "name": "chatId",
+              "type": "string",
+              "value": "={{ $(\"Extrair Dados da Mensagem\").first().json.chatId }}"
+            },
+            {
+              "id": "ad2",
+              "name": "sessao",
+              "type": "string",
+              "value": "={{ $(\"Extrair Dados da Mensagem\").first().json.sessao }}"
+            },
+            {
+              "id": "ad3",
+              "name": "resposta",
+              "type": "string",
+              "value": "[Juninho] Não consegui ler o arquivo. Pode enviar de novo, em PDF ou foto?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "91655ff7-8994-42a3-af8c-28f7e2143309",
+      "name": "Aviso de documento",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2128,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "r1",
+              "leftValue": "={{ $json.temRelatorio }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "ad8a7c38-89d2-4996-a727-67ea98acd4d6",
+      "name": "Gera relatório?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2960,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Pagamentos",
+          "mode": "list",
+          "value": "1411045806"
+        },
+        "options": {}
+      },
+      "id": "7f362b6c-aedb-4b24-bc93-f0d492b5bd6c",
+      "name": "Ler pagamentos (relatório)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3184,
+        112
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Locacoes",
+          "mode": "list",
+          "value": "1245259226"
+        },
+        "options": {}
+      },
+      "id": "8ff34fbb-5baa-42d9-8cec-d43dabba5b2a",
+      "name": "Ler locações (relatório)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3408,
+        112
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const TZ = 'America/Sao_Paulo';\nconst hoje = $now.setZone(TZ).startOf('day');\nconst nomesDia = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];\nconst MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];\n\nfunction semAcento(s) {\n  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();\n}\nfunction chave(s) {\n  return semAcento(s).replace(/[^a-z0-9]/g, '');\n}\nfunction lerData(s) {\n  const m = String(s == null ? '' : s).trim().match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n  if (!m) return null;\n  const d = hoje.set({ year: Number(m[3]), month: Number(m[2]), day: Number(m[1]) }).startOf('day');\n  return d.isValid ? d : null;\n}\nfunction paraNumero(v) {\n  let s = String(v == null ? '' : v).replace(/[^\\d.,-]/g, '');\n  if (s.includes(',')) s = s.replace(/\\./g, '').replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s);\n  return isNaN(n) ? null : n;\n}\nfunction brl(n) {\n  const partes = Number(n).toFixed(2).split('.');\n  partes[0] = partes[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\n  return 'R$ ' + partes.join(',');\n}\n\nconst prep = $('Preparar Resposta').first().json;\nconst tipo = ['pendencias', 'entradas', 'geral'].includes(semAcento(prep.relatorioTipo)) ? semAcento(prep.relatorioTipo) : 'geral';\nconst mm = String(prep.relatorioMes || '').match(/^(\\d{1,2})\\/(\\d{4})$/);\nconst mesRef = mm ? Number(mm[1]) : hoje.month;\nconst anoRef = mm ? Number(mm[2]) : hoje.year;\n\nconst locs = $input.all().map((i) => i.json).filter((l) => l.id_locacao);\nconst pags = $('Ler pagamentos (relatório)').all().map((i) => i.json).filter((p) => p.id_pagamento || p.valor);\n\nconst linhas = [];\n\nif (tipo === 'pendencias' || tipo === 'geral') {\n  const pend = [];\n  for (const loc of locs) {\n    if (semAcento(loc.status) !== 'ativa') continue;\n    const v = paraNumero(loc.valor_semanal);\n    const d0 = lerData(loc.data_inicio);\n    const dia = semAcento(loc.dia_vencimento);\n    if (!v || !d0) continue;\n    const dues = [d0];\n    if (dia) {\n      let d = d0.plus({ days: 1 });\n      let guard = 0;\n      while (d <= hoje && guard < 800) {\n        if (nomesDia[d.weekday % 7].startsWith(dia.slice(0, 3))) dues.push(d);\n        d = d.plus({ days: 1 });\n        guard++;\n      }\n    }\n    const dues2 = dues.filter((d) => d <= hoje);\n    const pago = pags\n      .filter((p) => chave(p.id_locacao) === chave(loc.id_locacao))\n      .reduce((s, p) => s + (paraNumero(p.valor) || 0), 0);\n    const semanasPagas = Math.floor((pago + 0.005) / v);\n    const devido = dues2.length * v - pago;\n    if (devido > 0.009 && semanasPagas < dues2.length) {\n      const primeira = dues2[semanasPagas];\n      pend.push({\n        ordem: primeira.toMillis(),\n        texto: '- ' + (loc.cliente_nome || 'cliente') + ' (' + String(loc.placa || '').toUpperCase() + '): ' + brl(devido) +\n          (primeira.equals(hoje) ? ', vence hoje' : ', desde ' + primeira.toFormat('dd/MM')) +\n          ' (' + (dues2.length - semanasPagas) + (dues2.length - semanasPagas === 1 ? ' semana)' : ' semanas)'),\n        devido,\n      });\n    }\n  }\n  pend.sort((a, b) => a.ordem - b.ordem);\n  linhas.push('PENDENTE até ' + hoje.toFormat('dd/MM/yyyy'));\n  if (!pend.length) {\n    linhas.push('Nada pendente.');\n  } else {\n    pend.slice(0, 30).forEach((p) => linhas.push(p.texto));\n    if (pend.length > 30) linhas.push('+ ' + (pend.length - 30) + ' outros');\n    linhas.push('Total pendente: ' + brl(pend.reduce((s, p) => s + p.devido, 0)));\n  }\n}\n\nif (tipo === 'entradas' || tipo === 'geral') {\n  if (linhas.length) linhas.push('');\n  const doMes = pags\n    .map((p) => ({ p, d: lerData(p.data_pagamento) }))\n    .filter((x) => x.d && x.d.month === mesRef && x.d.year === anoRef)\n    .sort((a, b) => a.d.toMillis() - b.d.toMillis());\n  linhas.push('ENTRADAS DE ' + MESES[mesRef - 1].toUpperCase() + '/' + anoRef);\n  if (!doMes.length) {\n    linhas.push('Nenhum pagamento registrado.');\n  } else {\n    doMes.slice(0, 40).forEach((x) => {\n      const forma = String(x.p.forma_pagamento || '').trim();\n      linhas.push('- ' + x.d.toFormat('dd/MM') + ' ' + (x.p.cliente_nome || 'cliente') + ' ' + brl(paraNumero(x.p.valor) || 0) + (forma ? ' (' + forma + ')' : ''));\n    });\n    if (doMes.length > 40) linhas.push('+ ' + (doMes.length - 40) + ' outros');\n    linhas.push('Total recebido: ' + brl(doMes.reduce((s, x) => s + (paraNumero(x.p.valor) || 0), 0)) + ' em ' + doMes.length + (doMes.length === 1 ? ' pagamento' : ' pagamentos'));\n  }\n}\n\nreturn [{ json: { chatId: prep.chatId, sessao: prep.sessao, resposta: '[Juninho] ' + linhas.join('\\n') } }];\n"
+      },
+      "id": "6edbf334-0b0b-4c10-b48a-84307c94bdf2",
+      "name": "Montar relatório",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3632,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "w1",
+              "leftValue": "={{ /wordprocessingml|msword/i.test(String($(\"Entrada WhatsApp (WAHA)\").first().json.body.payload.media?.mimetype || \"\")) || /\\.docx?$/i.test(String($(\"Entrada WhatsApp (WAHA)\").first().json.body.payload.media?.filename || \"\")) }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "ada0a535-2af6-4667-b584-178bafd7f36a",
+      "name": "É Word?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1776,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ \"TEMP-Juninho-\" + $now.toMillis() + \"-\" + ($(\"Entrada WhatsApp (WAHA)\").first().json.body.payload.media?.filename || \"arquivo.docx\") }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "cachedResultName": "/ (Root folder)",
+          "mode": "list",
+          "value": "root"
+        },
+        "options": {}
+      },
+      "id": "2020ae30-de83-467d-a714-2beed58fa7ee",
+      "name": "Enviar Word ao Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2000,
+        -640
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://www.googleapis.com/drive/v3/files/\" + $json.id + \"/copy\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ mimeType: \"application/vnd.google-apps.document\", name: \"TEMP-Juninho-convertido\" }) }}",
+        "options": {}
+      },
+      "id": "f4d3ebd7-7c62-44ca-acfb-116f892226a4",
+      "name": "Converter Word em Doc",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2224,
+        -640
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "id": "499c2a2b-d7a6-4732-b3ec-83c0afa5a7ad",
+      "name": "Exportar Word em PDF",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2448,
+        -640
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $(\"Converter Word em Doc\").first().json.id }}"
+        },
+        "options": {
+          "deletePermanently": true
+        }
+      },
+      "id": "f9658d6c-8ac0-4929-96fa-2f5dd0d03f34",
+      "name": "Apagar Doc convertido",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2672,
+        -800
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $(\"Enviar Word ao Drive\").first().json.id }}"
+        },
+        "options": {
+          "deletePermanently": true
+        }
+      },
+      "id": "2cdd299e-b1fb-43cb-a540-728b4f7733dd",
+      "name": "Apagar Word enviado",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2896,
+        -800
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "k1",
+              "leftValue": "={{ $json.temKm }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "471c2c57-eb6c-4668-8871-f90a52909423",
+      "name": "Registra km?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3184,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Veiculos",
+          "mode": "list",
+          "value": "2134477414"
+        },
+        "options": {}
+      },
+      "id": "b7ffcd6a-4f64-4113-a809-29e490c72763",
+      "name": "Ler veículos (km)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3408,
+        352
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Locacoes",
+          "mode": "list",
+          "value": "1245259226"
+        },
+        "options": {}
+      },
+      "id": "7c3ca876-a3c0-4b4c-89cf-5ccd9a032be5",
+      "name": "Ler locações (km)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3632,
+        352
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Quilometragem",
+          "mode": "list",
+          "value": "1782184592"
+        },
+        "options": {}
+      },
+      "id": "cb01e43b-3a07-4bdd-9990-534081b09cb5",
+      "name": "Ler quilometragem (km)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3856,
+        352
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const TZ = 'America/Sao_Paulo';\nconst hoje = $now.setZone(TZ).startOf('day');\nconst agora = $now.setZone(TZ);\nconst LIMITE_PADRAO = 6000;    // cláusula 13ª do modelo de contrato (usado se a locação não tiver o valor)\nconst VALOR_PADRAO = 0.5;      // R$ por km excedente (idem)\nconst INTERVALO_OLEO = 10000;  // troca de óleo a cada 10.000 km\nconst SOCIOS = ['5500900000002@c.us', '5500900000003@c.us'];\n\nfunction semAcento(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }\nfunction chave(s) { return semAcento(s).replace(/[^a-z0-9]/g, ''); }\nfunction lerData(s) {\n  const m = String(s == null ? '' : s).trim().match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n  if (!m) return null;\n  const d = hoje.set({ year: Number(m[3]), month: Number(m[2]), day: Number(m[1]) }).startOf('day');\n  return d.isValid ? d : null;\n}\nfunction paraKm(v) {\n  const s = String(v == null ? '' : v).replace(/[^\\d]/g, '');\n  if (!s) return null;\n  const n = parseInt(s, 10);\n  return isNaN(n) ? null : n;\n}\nfunction paraNumero(v) {\n  let s = String(v == null ? '' : v).replace(/[^\\d.,-]/g, '');\n  if (!s) return null;\n  if (s.includes(',')) s = s.replace(/\\./g, '').replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s);\n  return isNaN(n) ? null : n;\n}\nfunction fmtKm(n) { return Math.round(n).toString().replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.') + ' km'; }\nfunction brl(n) {\n  const p = Number(n).toFixed(2).split('.');\n  p[0] = p[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\n  return 'R$ ' + p.join(',');\n}\n\nconst prep = $('Preparar Resposta').first().json;\nconst veiculos = $('Ler veículos (km)').all().map((i) => i.json).filter((v) => v.placa);\nconst locacoes = $('Ler locações (km)').all().map((i) => i.json).filter((l) => l.id_locacao);\nconst leituras = $('Ler quilometragem (km)').all().map((i) => i.json).filter((r) => r.placa && r.km);\n\nconst placaInformada = String(prep.kmPlaca || '').toUpperCase().replace(/[^A-Z0-9]/g, '');\nconst kmNovo = paraKm(prep.kmValor);\nconst oleoKm = paraKm(prep.oleoKm);\nconst oleoData = lerData(prep.oleoData);\n\nconst respostaPara = (texto) => ({ chatId: prep.chatId, sessao: prep.sessao, resposta: '[Juninho] ' + texto });\nconst saida = (obj) => [{ json: obj }];\n\nconst veic = veiculos.find((v) => chave(v.placa) === chave(placaInformada));\nif (!veic) {\n  return saida({ gravar: false, log: null, veiculo: null, mensagens: [respostaPara('Veículo ' + (placaInformada || '?') + ' não encontrado na planilha. Cadastre-o primeiro.')] });\n}\nconst placa = String(veic.placa).toUpperCase();\nconst nomeVeic = [veic.marca, veic.modelo].filter(Boolean).join(' ');\nconst kmAnterior = paraKm(veic.km_atual);\nconst dataAnterior = lerData(veic.km_atualizado_em);\n\nif (kmNovo == null && oleoKm == null) {\n  return saida({ gravar: false, log: null, veiculo: null, mensagens: [respostaPara('Não entendi o km. Envie a placa e o km atual.')] });\n}\nif (kmNovo != null && kmAnterior != null && kmNovo < kmAnterior) {\n  return saida({ gravar: false, log: null, veiculo: null, mensagens: [respostaPara(placa + ': ' + fmtKm(kmNovo) + ' é menor que o último registrado (' + fmtKm(kmAnterior) + (dataAnterior ? ' em ' + dataAnterior.toFormat('dd/MM') : '') + '). Confira e envie de novo.')] });\n}\n\n// ---- novo estado do veículo\nlet kmAtual = kmAnterior;\nlet kmAtualEm = veic.km_atualizado_em || '';\nlet kmOleo = paraKm(veic.km_ultima_troca_oleo);\nlet dataOleo = veic.data_ultima_troca_oleo || '';\nlet avisoOleo = veic.km_aviso_oleo || '';\nlet log = null;\nconst linhasResp = [];\nconst mensagensSocios = [];\n\nconst idLeitura = 'KM-' + agora.toFormat('ddMMyyHHmmss');\n\nif (kmNovo != null) {\n  kmAtual = kmNovo;\n  kmAtualEm = hoje.toFormat('dd/MM/yyyy');\n  log = { id_leitura: idLeitura, placa, km: String(kmNovo), data: kmAtualEm, origem: 'whatsapp', registrado_em: agora.toFormat('dd/MM/yyyy HH:mm') };\n  let l = placa + ': ' + fmtKm(kmNovo) + ' registrado.';\n  if (kmAnterior != null && kmNovo - kmAnterior > 8000) l += ' Atenção: +' + fmtKm(kmNovo - kmAnterior) + (dataAnterior ? ' desde ' + dataAnterior.toFormat('dd/MM') : '') + '.';\n  linhasResp.push(l);\n}\n\nif (oleoKm != null) {\n  kmOleo = oleoKm;\n  dataOleo = (oleoData || hoje).toFormat('dd/MM/yyyy');\n  avisoOleo = '';\n  if (kmNovo == null) {\n    log = { id_leitura: idLeitura, placa, km: String(oleoKm), data: dataOleo, origem: 'troca_oleo', registrado_em: agora.toFormat('dd/MM/yyyy HH:mm') };\n    if (kmAtual == null) { kmAtual = oleoKm; kmAtualEm = dataOleo; }\n  }\n  linhasResp.push(placa + ': troca de óleo registrada (' + fmtKm(oleoKm) + ' em ' + dataOleo + ').');\n}\n\n// ---- aviso de troca de óleo\nif (kmOleo != null && kmAtual != null) {\n  const rodado = kmAtual - kmOleo;\n  if (rodado >= INTERVALO_OLEO) {\n    if (String(avisoOleo) !== String(kmOleo)) {\n      mensagensSocios.push('TROCA DE ÓLEO: ' + placa + (nomeVeic ? ' (' + nomeVeic + ')' : '') + ' rodou ' + fmtKm(rodado) + ' desde a última troca (' + fmtKm(kmOleo) + (dataOleo ? ' em ' + dataOleo : '') + '). Km atual: ' + fmtKm(kmAtual) + '.');\n      avisoOleo = String(kmOleo);\n    }\n    linhasResp.push('Óleo: ' + fmtKm(rodado) + ' desde a troca. Vencido.');\n  } else {\n    linhasResp.push('Óleo: faltam ' + fmtKm(INTERVALO_OLEO - rodado) + ' (troca em ' + fmtKm(kmOleo + INTERVALO_OLEO) + ').');\n  }\n} else if (kmNovo != null) {\n  linhasResp.push('Sem troca de óleo registrada. Informe o km e a data da última troca.');\n}\n\n// ---- limite mensal de km da locação\nif (kmNovo != null) {\n  const bruto = String($('Agente Juninho').first().json.output || '');\n  const locMarcada = (bruto.match(/\\[\\[KM:[^\\]]*?\\|[^|\\]]*\\|\\s*(LOC-[\\w-]+)/) || [])[1];\n  const loc = locMarcada\n    ? locacoes.find((l) => chave(l.id_locacao) === chave(locMarcada))\n    : locacoes.find((l) => chave(l.placa) === chave(placa) && semAcento(l.status) === 'ativa');\n  if (loc) {\n    const LIMITE_KM = paraKm(loc.limite_km_mensal) || LIMITE_PADRAO;\n    const VALOR_KM = paraNumero(loc.valor_km_excedente) != null ? paraNumero(loc.valor_km_excedente) : VALOR_PADRAO;\n    const d0 = lerData(loc.data_inicio);\n    const kmIni = paraKm(loc.km_inicio);\n    if (!d0 || kmIni == null) {\n      linhasResp.push('Locação ' + loc.id_locacao + ' sem km inicial: informe o km do veículo na entrega para controlar o limite de ' + fmtKm(LIMITE_KM) + '/mês.');\n    } else {\n      // leituras do veículo, incluindo o km da entrega e a leitura de hoje\n      let pts = [{ d: d0, km: kmIni }];\n      for (const r of leituras) {\n        if (chave(r.placa) !== chave(placa)) continue;\n        const d = lerData(r.data);\n        const k = paraKm(r.km);\n        if (d && k != null && d >= d0) pts.push({ d, km: k });\n      }\n      pts.push({ d: hoje, km: kmNovo });\n      pts.sort((a, b) => a.d.toMillis() - b.d.toMillis() || a.km - b.km);\n      // km nunca diminui: descarta leituras fora de ordem\n      const ok = [];\n      for (const p of pts) { if (!ok.length || p.km >= ok[ok.length - 1].km) ok.push(p); }\n      pts = ok;\n      const dataAnteriorLeitura = (() => {\n        const ant = pts.filter((p) => p.d < hoje || (p.d.equals(hoje) && p.km < kmNovo));\n        return ant.length ? ant[ant.length - 1].d : d0;\n      })();\n      let estimado = false;\n      const kmEm = (data) => {\n        if (data <= pts[0].d) return pts[0].km;\n        const ult = pts[pts.length - 1];\n        if (data >= ult.d) return ult.km;\n        for (let i = 0; i < pts.length - 1; i++) {\n          const a = pts[i], b = pts[i + 1];\n          if (data >= a.d && data <= b.d) {\n            if (data.equals(a.d)) return a.km;\n            if (data.equals(b.d)) return b.km;\n            estimado = true;\n            const span = b.d.diff(a.d, 'days').days || 1;\n            return a.km + (b.km - a.km) * (data.diff(a.d, 'days').days / span);\n          }\n        }\n        return ult.km;\n      };\n      let kAtual = 0;\n      while (d0.plus({ months: kAtual + 1 }) <= hoje) kAtual++;\n      const periodos = [];\n      for (let k = 0; k <= kAtual; k++) {\n        const ini = d0.plus({ months: k });\n        const fim = d0.plus({ months: k + 1 });\n        const encerrado = k < kAtual;\n        if (encerrado && !(fim > dataAnteriorLeitura && fim <= hoje)) continue; // já informado antes\n        estimado = false;\n        const kIni = kmEm(ini);\n        const kFim = encerrado ? kmEm(fim) : kmNovo;\n        const uso = kFim - kIni;\n        const exc = Math.max(0, Math.round(uso - LIMITE_KM));\n        if (exc > 0) periodos.push({ ini, fim, encerrado, uso: Math.round(uso), exc, valor: exc * VALOR_KM, estimado });\n      }\n      if (periodos.length) {\n        const cab = 'LIMITE DE KM ATINGIDO: ' + (loc.cliente_nome || 'cliente') + ' (' + placa + '), limite de ' + fmtKm(LIMITE_KM) + '/mês.';\n        const linhas = periodos.map((p) =>\n          '- ' + p.ini.toFormat('dd/MM') + ' a ' + p.fim.minus({ days: 1 }).toFormat('dd/MM') + (p.encerrado ? ' (encerrado)' : ' (em andamento, até hoje)') +\n          ': rodou ' + fmtKm(p.uso) + ', excedente ' + fmtKm(p.exc) + ' x ' + brl(VALOR_KM) + ' = ' + brl(p.valor) + (p.estimado ? ' (estimado)' : ''));\n        const total = periodos.reduce((s, p) => s + p.valor, 0);\n        mensagensSocios.push([cab].concat(linhas).concat(periodos.length > 1 ? ['Total a cobrar: ' + brl(total)] : []).join('\\n'));\n        linhasResp.push('Limite de km excedido (' + brl(total) + ').');\n      }\n    }\n  }\n}\n\nconst mensagens = [respostaPara(linhasResp.join(' '))];\nif (mensagensSocios.length) mensagens[0].resposta += ' Sócios avisados.';\nfor (const texto of mensagensSocios) {\n  for (const dest of SOCIOS) mensagens.push({ chatId: dest, sessao: prep.sessao, resposta: '[Juninho] ' + texto });\n}\n\nconst veiculoOut = {\n  placa: String(veic.placa),\n  km_atual: kmAtual == null ? '' : String(kmAtual),\n  km_atualizado_em: kmAtualEm,\n  km_ultima_troca_oleo: kmOleo == null ? '' : String(kmOleo),\n  data_ultima_troca_oleo: dataOleo,\n  km_aviso_oleo: String(avisoOleo),\n};\nreturn saida({ gravar: true, log, veiculo: veiculoOut, mensagens });\n"
+      },
+      "id": "b878294a-a29b-4e3d-abfb-413aeaf918ae",
+      "name": "Montar km",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4080,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "g1",
+              "leftValue": "={{ $json.gravar }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "6b6aedbf-ad95-41b8-bdcd-784cad98ac76",
+      "name": "Gravar km?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4304,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Quilometragem",
+          "mode": "list",
+          "value": "1782184592"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "id_leitura",
+              "id": "id_leitura",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "placa",
+              "id": "placa",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "km",
+              "id": "km",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "data",
+              "id": "data",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "origem",
+              "id": "origem",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "registrado_em",
+              "id": "registrado_em",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "data": "={{ $json.log.data }}",
+            "id_leitura": "={{ $json.log.id_leitura }}",
+            "km": "={{ $json.log.km }}",
+            "origem": "={{ $json.log.origem }}",
+            "placa": "={{ $json.log.placa }}",
+            "registrado_em": "={{ $json.log.registrado_em }}"
+          }
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "077363e1-b6fa-4d20-a197-29a4d1ed6777",
+      "name": "Registrar leitura de km",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4528,
+        240
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "Juninho - Locadora",
+          "mode": "list",
+          "value": "SEU_ID_GOOGLE_1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "Veiculos",
+          "mode": "list",
+          "value": "2134477414"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "placa"
+          ],
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "placa",
+              "id": "placa",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "km_atual",
+              "id": "km_atual",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "km_atualizado_em",
+              "id": "km_atualizado_em",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "km_ultima_troca_oleo",
+              "id": "km_ultima_troca_oleo",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "data_ultima_troca_oleo",
+              "id": "data_ultima_troca_oleo",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "km_aviso_oleo",
+              "id": "km_aviso_oleo",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "data_ultima_troca_oleo": "={{ $('Montar km').first().json.veiculo.data_ultima_troca_oleo }}",
+            "km_atual": "={{ $('Montar km').first().json.veiculo.km_atual }}",
+            "km_atualizado_em": "={{ $('Montar km').first().json.veiculo.km_atualizado_em }}",
+            "km_aviso_oleo": "={{ $('Montar km').first().json.veiculo.km_aviso_oleo }}",
+            "km_ultima_troca_oleo": "={{ $('Montar km').first().json.veiculo.km_ultima_troca_oleo }}",
+            "placa": "={{ $('Montar km').first().json.veiculo.placa }}"
+          }
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "fa0cde6d-60e1-4fc8-9efc-78cb9edc50ba",
+      "name": "Atualizar km do veículo",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4752,
+        240
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Preparar Resposta').first().json;\nconst texto = String(prep.resposta || '').replace(/^\\[Juninho\\]\\s*/, '').trim();\nconst msgs = ($('Montar km').first().json.mensagens || []).map((m) => ({ ...m }));\nif (texto && msgs.length) {\n  msgs[0].resposta = '[Juninho] ' + texto + '\\n' + String(msgs[0].resposta || '').replace(/^\\[Juninho\\]\\s*/, '');\n}\nreturn msgs.map((m) => ({ json: m }));\n"
+      },
+      "id": "0b9a5143-d350-40cc-97f6-3aa687dbb5c6",
+      "name": "Montar mensagens km",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4976,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "ar1",
+              "leftValue": "={{ /\\[\\[ARQUIVAR:/.test($('Agente Juninho').first().json.output) }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "505ce50f-3b56-42d9-9de9-4f5b7c1d82e1",
+      "name": "Arquivar documento?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4192,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const bruto = String($('Agente Juninho').first().json.output || '');\nconst m = bruto.match(/\\[\\[ARQUIVAR:\\s*([^|\\]]*)\\|?\\s*([^\\]]*)\\]\\]/);\nconst limpo = (s) => String(s || '').replace(/[\\\\/:*?\"<>|]/g, ' ').replace(/\\s+/g, ' ').trim();\nconst cliente = limpo(m && m[1]) || 'cliente';\nconst tipo = limpo(m && m[2]) || 'documento';\nconst media = $('Entrada WhatsApp (WAHA)').first().json.body.payload.media || {};\nlet bin = null;\nfor (const n of ['Baixar imagem (WAHA)', 'Baixar documento (WAHA)']) {\n  try {\n    const it = $(n).first();\n    if (it && it.binary && it.binary.data) { bin = it.binary.data; break; }\n  } catch (e) {}\n}\nif (!bin) return [];\nconst mime = String(media.mimetype || bin.mimeType || '').toLowerCase();\nconst mapa = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'application/pdf': 'pdf', 'application/msword': 'doc', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx' };\nconst doNome = (String(media.filename || '').match(/\\.([A-Za-z0-9]{2,5})$/) || [])[1];\nconst ext = (doNome || mapa[mime.split(';')[0]] || 'bin').toLowerCase();\nconst data = $now.setZone('America/Sao_Paulo').toFormat('dd-MM-yyyy HHmm');\nconst arquivoNome = cliente + ' - ' + tipo + ' - ' + data + '.' + ext;\nreturn [{ json: { arquivoNome, cliente, tipo }, binary: { data: bin } }];\n"
+      },
+      "id": "4a92e9f9-7e0e-4c4c-8f19-db769620e1a1",
+      "name": "Montar arquivo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4432,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files/SEU_ID_GOOGLE_1?fields=id,parents&supportsAllDrives=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {}
+      },
+      "id": "fe300bea-e4d0-4f11-9103-3faade2c0f6d",
+      "name": "Pai da planilha",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4672,
+        1200
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://www.googleapis.com/drive/v3/files?q=\" + encodeURIComponent(\"name='docs_locação' and mimeType='application/vnd.google-apps.folder' and trashed=false and '\" + (($json.parents || [\"root\"])[0]) + \"' in parents\") + \"&fields=files(id,name)&supportsAllDrives=true&includeItemsFromAllDrives=true\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {}
+      },
+      "id": "be978b9b-43e7-43c0-8ff9-8bb9c5b3c301",
+      "name": "Buscar pasta docs_locação",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4912,
+        1200
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "pe1",
+              "leftValue": "={{ ($json.files || []).length > 0 }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "d8c0e05c-7ea4-49cb-97e7-7e27f8925c31",
+      "name": "Pasta existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5152,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files?supportsAllDrives=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { name: \"docs_locação\", mimeType: \"application/vnd.google-apps.folder\", parents: [($('Pai da planilha').first().json.parents || [\"root\"])[0]] } }}",
+        "options": {}
+      },
+      "id": "a73925ad-a6ec-45f5-b3f6-0728d084e31a",
+      "name": "Criar pasta docs_locação",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        5392,
+        1312
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Montar arquivo').first();\nconst pastaId = ($json.files && $json.files[0] && $json.files[0].id) || $json.id;\nreturn [{ json: { pastaId, arquivoNome: base.json.arquivoNome }, binary: base.binary }];\n"
+      },
+      "id": "667e2a52-ceac-4712-91b7-dc366986993f",
+      "name": "Anexar arquivo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5632,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.arquivoNome }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.pastaId }}"
+        },
+        "options": {}
+      },
+      "id": "c3acb116-3a97-4ccb-b66f-da7f54242401",
+      "name": "Salvar em docs_locação",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        5872,
+        1200
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Entrada WhatsApp (WAHA)": {
+      "main": [
+        [
+          {
+            "node": "Extrair Dados da Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Dados da Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Número Autorizado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem imagem?": {
+      "main": [
+        [
+          {
+            "node": "Baixar imagem (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tem PDF?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar imagem (WAHA)": {
+      "main": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Juninho": {
+      "main": [
+        [
+          {
+            "node": "Preparar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude (Haiku ou Sonnet)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memória da conversa": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_veiculos": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_locacoes": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_pagamentos": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cadastrar_veiculo": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "registrar_locacao": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criar_pagamento": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualizar_veiculo": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualizar_locacao": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualizar_pagamento": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Resposta": {
+      "main": [
+        [
+          {
+            "node": "Gera contrato?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gera relatório?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Arquivar documento?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Converter PDF para base64": {
+      "main": [
+        [
+          {
+            "node": "Enviar PDF (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar PDF (WAHA)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Mensagem com link do contrato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem com link do contrato": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_clientes": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cadastrar_cliente": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualizar_cliente": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Todo dia às 8h": {
+      "main": [
+        [
+          {
+            "node": "Ler locações",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler locações": {
+      "main": [
+        [
+          {
+            "node": "Ler veículos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler veículos": {
+      "main": [
+        [
+          {
+            "node": "Montar avisos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar avisos": {
+      "main": [
+        [
+          {
+            "node": "Enviar aviso (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar contrato em PDF": {
+      "main": [
+        [
+          {
+            "node": "Converter PDF para base64",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem com link do contrato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gera contrato?": {
+      "main": [
+        [
+          {
+            "node": "Ler locações (contrato)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler locações (contrato)": {
+      "main": [
+        [
+          {
+            "node": "Ler clientes (contrato)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler clientes (contrato)": {
+      "main": [
+        [
+          {
+            "node": "Ler veículos (contrato)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler veículos (contrato)": {
+      "main": [
+        [
+          {
+            "node": "Montar dados do contrato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar dados do contrato": {
+      "main": [
+        [
+          {
+            "node": "Dados completos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados completos?": {
+      "main": [
+        [
+          {
+            "node": "Criar documento do contrato",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem de erro do contrato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem de erro do contrato": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar documento do contrato": {
+      "main": [
+        [
+          {
+            "node": "Preencher contrato",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem de erro do contrato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preencher contrato": {
+      "main": [
+        [
+          {
+            "node": "Baixar contrato em PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem com link do contrato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Número Autorizado?": {
+      "main": [
+        [
+          {
+            "node": "Tem áudio?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem áudio?": {
+      "main": [
+        [
+          {
+            "node": "Baixar áudio (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tem imagem?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar áudio (WAHA)": {
+      "main": [
+        [
+          {
+            "node": "Transcrever áudio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso de áudio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcrever áudio": {
+      "main": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso de áudio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aviso de áudio": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem PDF?": {
+      "main": [
+        [
+          {
+            "node": "Baixar documento (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tem outro anexo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem outro anexo?": {
+      "main": [
+        [
+          {
+            "node": "Aviso de anexo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar documento (WAHA)": {
+      "main": [
+        [
+          {
+            "node": "É Word?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso de documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler documento": {
+      "main": [
+        [
+          {
+            "node": "Agente Juninho",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso de documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aviso de anexo": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aviso de documento": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gera relatório?": {
+      "main": [
+        [
+          {
+            "node": "Ler pagamentos (relatório)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registra km?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler pagamentos (relatório)": {
+      "main": [
+        [
+          {
+            "node": "Ler locações (relatório)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler locações (relatório)": {
+      "main": [
+        [
+          {
+            "node": "Montar relatório",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar relatório": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Word?": {
+      "main": [
+        [
+          {
+            "node": "Enviar Word ao Drive",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ler documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Word ao Drive": {
+      "main": [
+        [
+          {
+            "node": "Converter Word em Doc",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso de documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Converter Word em Doc": {
+      "main": [
+        [
+          {
+            "node": "Exportar Word em PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso de documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exportar Word em PDF": {
+      "main": [
+        [
+          {
+            "node": "Ler documento",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Apagar Doc convertido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso de documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apagar Doc convertido": {
+      "main": [
+        [
+          {
+            "node": "Apagar Word enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registra km?": {
+      "main": [
+        [
+          {
+            "node": "Ler veículos (km)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Resposta (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler veículos (km)": {
+      "main": [
+        [
+          {
+            "node": "Ler locações (km)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler locações (km)": {
+      "main": [
+        [
+          {
+            "node": "Ler quilometragem (km)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler quilometragem (km)": {
+      "main": [
+        [
+          {
+            "node": "Montar km",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar km": {
+      "main": [
+        [
+          {
+            "node": "Gravar km?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gravar km?": {
+      "main": [
+        [
+          {
+            "node": "Registrar leitura de km",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagens km",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar leitura de km": {
+      "main": [
+        [
+          {
+            "node": "Atualizar km do veículo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar km do veículo": {
+      "main": [
+        [
+          {
+            "node": "Montar mensagens km",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar mensagens km": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta (WAHA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Arquivar documento?": {
+      "main": [
+        [
+          {
+            "node": "Montar arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar arquivo": {
+      "main": [
+        [
+          {
+            "node": "Pai da planilha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pai da planilha": {
+      "main": [
+        [
+          {
+            "node": "Buscar pasta docs_locação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar pasta docs_locação": {
+      "main": [
+        [
+          {
+            "node": "Pasta existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pasta existe?": {
+      "main": [
+        [
+          {
+            "node": "Anexar arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Criar pasta docs_locação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar pasta docs_locação": {
+      "main": [
+        [
+          {
+            "node": "Anexar arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anexar arquivo": {
+      "main": [
+        [
+          {
+            "node": "Salvar em docs_locação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  }
+}
