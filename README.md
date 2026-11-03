@@ -1,10 +1,10 @@
 # Juninho: assistente de WhatsApp com IA para uma locadora de veículos
 
-O Juninho é um agente de IA que roda no WhatsApp e cuida da parte administrativa de uma locadora de veículos familiar. O dono conversa com ele em linguagem natural, por texto, áudio, foto ou PDF, e o agente consulta e atualiza a base de dados, gera contratos, registra pagamentos e manda avisos de cobrança sozinho todas as manhãs.
+O Juninho é um agente de IA que roda no WhatsApp e cuida da parte administrativa de uma pequena locadora de veículos familiar. O dono conversa com ele em linguagem natural, por texto, áudio, foto ou PDF, e o agente consulta e atualiza a base de dados, gera contratos, registra pagamentos e manda avisos de cobrança sozinho todas as manhãs.
 
-Eu construí o Juninho para o meu pai, que administra a locadora e não queria ficar preso a planilhas e papelada. Ele está **em produção e é usado todos os dias**.
+Eu construí o Juninho para o meu pai, que administra a locadora e não queria ficar preso a planilhas e papelada. Ele está **em produção desde outubro de 2026**: atende a locadora pelo WhatsApp e envia os avisos automáticos todas as manhãs.
 
-> Feito com **n8n**, **Claude (Anthropic)**, **OpenAI** (transcrição de áudio), **WAHA (API de WhatsApp)** e **Google Sheets / Drive / Docs**.
+> Feito com **n8n**, **Claude (Anthropic)**, **OpenAI** (transcrição de áudio), **WAHA (API de WhatsApp) na Oracle Cloud** e **Google Sheets / Drive / Docs**.
 
 ---
 
@@ -36,7 +36,7 @@ E, sem ninguém pedir, **todo dia às 8h** ele envia:
 
 ```mermaid
 flowchart LR
-    W[WhatsApp] -->|webhook| WAHA[WAHA API]
+    W[WhatsApp] -->|webhook| WAHA[WAHA API<br/>Oracle Cloud]
     WAHA --> N8N[n8n: Webhook]
     N8N --> AUTH{Número<br/>autorizado?}
     AUTH -->|sim| MID{Tipo de mídia}
@@ -80,7 +80,7 @@ O workflow tem **75 nós** organizados em três fluxos:
 | Agente / LLM | Claude Haiku (Anthropic) via nó AI Agent do n8n, com memória de conversa |
 | Áudio | OpenAI (transcrição de áudio em português) |
 | Leitura de PDF e imagem | Claude (multimodal) |
-| WhatsApp | WAHA (WhatsApp HTTP API) |
+| WhatsApp | WAHA (WhatsApp HTTP API), hospedado por mim em uma VM na Oracle Cloud |
 | Dados | Google Sheets |
 | Contratos e arquivos | Google Docs e Google Drive |
 | Lógica de negócio | JavaScript nos nós Code do n8n |

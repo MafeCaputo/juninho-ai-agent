@@ -3,7 +3,7 @@
 ## Pré-requisitos
 
 - Uma instância do **n8n** (self-hosted ou n8n Cloud)
-- Um servidor com **[WAHA](https://waha.devlike.pro/)** conectado a um número de WhatsApp
+- Um servidor com **[WAHA](https://waha.devlike.pro/)** conectado a um número de WhatsApp (o original roda em uma VM na Oracle Cloud)
 - Conta Google (Sheets, Drive e Docs)
 - Chave de API da **Anthropic** (agente e leitura de documentos)
 - Chave de API da **OpenAI** (transcrição de áudio)
